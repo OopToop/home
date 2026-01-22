@@ -21,42 +21,38 @@ a { text-decoration: none; color: inherit;}
 const owner = 'OopToop';
 const repo = 'videos';
 const metadataPath = 'metadata';
-const videoFeed = document.getElementById('video-feed');
+const card = document.createElement('div');
+card.className = 'video-card';
 
-// fetch all JSON files from metadata folder using GitHub API
-fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
-    .then(res => res.json())
-    .then(files => {
-        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+// title
+const titleLink = document.createElement('a');
+titleLink.className = 'video-title';
+titleLink.textContent = data.title || 'Untitled';
+titleLink.href = `video.html?id=${encodeURIComponent(jsonFiles[i].name)}`;
 
-        const fetchPromises = jsonFiles.map(file => fetch(file.download_url).then(r => r.json()));
+// description
+const desc = document.createElement('div');
+desc.className = 'video-description';
+desc.textContent = data.description || '';
 
-        Promise.all(fetchPromises)
-            .then(allData => {
-                allData.forEach((data, i) => {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
+// thumbnail image
+const thumb = document.createElement('img');
+thumb.src = `https://ooptoop.github.io/videos/thumbnails/${encodeURIComponent(data.thumbnail)}`;
+thumb.alt = data.title;
+thumb.style.width = '100%';
+thumb.style.maxWidth = '640px';
+thumb.style.borderRadius = '6px';
+thumb.style.cursor = 'pointer';
+thumb.addEventListener('click', () => {
+    window.location.href = titleLink.href; // go to individual page
+});
 
-                    // title links to individual video page
-                    const titleLink = document.createElement('a');
-                    titleLink.className = 'video-title';
-                    titleLink.textContent = data.title || 'Untitled';
-                    // encode filename for URL
-                    titleLink.href = `video.html?id=${encodeURIComponent(jsonFiles[i].name)}`;
+card.appendChild(thumb);
+card.appendChild(titleLink);
+card.appendChild(desc);
 
-                    const desc = document.createElement('div');
-                    desc.className = 'video-description';
-                    desc.textContent = data.description || '';
+videoFeed.appendChild(card);
 
-                    const video = document.createElement('video');
-                    video.controls = true;
-                    video.src = `https://ooptoop.github.io/videos/videos/${encodeURIComponent(data.filename)}`;
-
-                    card.appendChild(titleLink);
-                    card.appendChild(desc);
-                    card.appendChild(video);
-
-                    videoFeed.appendChild(card);
                 });
             })
             .catch(err => console.error('Error loading metadata JSONs:', err));
