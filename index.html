@@ -47,39 +47,47 @@
 
         // Use GitHub API to list metadata files
         fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
-            .then(res => res.json())
-            .then(files => {
-                files.forEach(file => {
-                    if(file.name.endsWith('.json')) {
-                        fetch(file.download_url)
-                            .then(res => res.json())
-                            .then(data => {
-                                const card = document.createElement('div');
-                                card.className = 'video-card';
+    .then(res => res.json())
+    .then(files => {
+        // Filter only .json files
+        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
 
-                                const title = document.createElement('div');
-                                title.className = 'video-title';
-                                title.textContent = data.title;
+        // Map each JSON fetch into a promise
+        const fetchPromises = jsonFiles.map(file =>
+            fetch(file.download_url).then(res => res.json())
+        );
 
-                                const desc = document.createElement('div');
-                                desc.className = 'video-description';
-                                desc.textContent = data.description;
+        // Wait for all JSON files to load
+        Promise.all(fetchPromises)
+            .then(allData => {
+                // allData is an array of all video metadata
+                allData.forEach(data => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
 
-                                const video = document.createElement('video');
-                                video.controls = true;
-                                video.src = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/${encodeURIComponent(data.filename)}`;
+                    const title = document.createElement('div');
+                    title.className = 'video-title';
+                    title.textContent = data.title;
 
-                                card.appendChild(title);
-                                card.appendChild(desc);
-                                card.appendChild(video);
+                    const desc = document.createElement('div');
+                    desc.className = 'video-description';
+                    desc.textContent = data.description;
 
-                                videoFeed.appendChild(card);
-                            })
-                            .catch(err => console.error('Error loading metadata JSON:', err));
-                    }
+                    const video = document.createElement('video');
+                    video.controls = true;
+                    video.src = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/${encodeURIComponent(data.filename)}`;
+
+                    card.appendChild(title);
+                    card.appendChild(desc);
+                    card.appendChild(video);
+
+                    videoFeed.appendChild(card);
                 });
             })
-            .catch(err => console.error('Error fetching metadata folder:', err));
+            .catch(err => console.error('Error fetching video metadata:', err));
+    })
+    .catch(err => console.error('Error fetching metadata folder:', err));
+
     </script>
 </body>
 </html>
