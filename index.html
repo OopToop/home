@@ -40,43 +40,46 @@
     <div id="video-feed"></div>
 
     <script>
-        // List of video metadata files in 'videos' repo
-        const metadataFiles = [
-            'Punching%20Countryballs%20down%20the%20Stairs.json',
-            'Punching%20Countryballs%20down%20the%20Stairs%202.json',
-        ];
-
-        const baseURL = 'https://raw.githubusercontent.com/OopToop/videos/main/metadata/';
-
+        const owner = 'OopToop';
+        const repo = 'videos';
+        const metadataPath = 'metadata'; // folder in videos repo
         const videoFeed = document.getElementById('video-feed');
 
-        metadataFiles.forEach(file => {
-            fetch(baseURL + file)
-                .then(response => response.json())
-                .then(data => {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
+        // Use GitHub API to list metadata files
+        fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
+            .then(res => res.json())
+            .then(files => {
+                files.forEach(file => {
+                    if(file.name.endsWith('.json')) {
+                        fetch(file.download_url)
+                            .then(res => res.json())
+                            .then(data => {
+                                const card = document.createElement('div');
+                                card.className = 'video-card';
 
-                    const title = document.createElement('div');
-                    title.className = 'video-title';
-                    title.textContent = data.title;
+                                const title = document.createElement('div');
+                                title.className = 'video-title';
+                                title.textContent = data.title;
 
-                    const desc = document.createElement('div');
-                    desc.className = 'video-description';
-                    desc.textContent = data.description;
+                                const desc = document.createElement('div');
+                                desc.className = 'video-description';
+                                desc.textContent = data.description;
 
-                    const video = document.createElement('video');
-                    video.controls = true;
-                    video.src = `https://raw.githubusercontent.com/OopToop/videos/main/videos/${data.filename}`;
+                                const video = document.createElement('video');
+                                video.controls = true;
+                                video.src = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/${encodeURIComponent(data.filename)}`;
 
-                    card.appendChild(title);
-                    card.appendChild(desc);
-                    card.appendChild(video);
+                                card.appendChild(title);
+                                card.appendChild(desc);
+                                card.appendChild(video);
 
-                    videoFeed.appendChild(card);
-                })
-                .catch(err => console.error('Error loading metadata:', err));
-        });
+                                videoFeed.appendChild(card);
+                            })
+                            .catch(err => console.error('Error loading metadata JSON:', err));
+                    }
+                });
+            })
+            .catch(err => console.error('Error fetching metadata folder:', err));
     </script>
 </body>
 </html>
