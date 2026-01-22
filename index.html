@@ -68,6 +68,7 @@
                     const title = document.createElement('div');
                     title.className = 'video-title';
                     title.textContent = data.title;
+                    title.href = `video.html?id=${encodeURIComponent(file.name)}`;
 
                     const desc = document.createElement('div');
                     desc.className = 'video-description';
