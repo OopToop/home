@@ -24,12 +24,14 @@
 
   /* Media */
   .video-thumb {
-    display: block;
     width: 100%;
-    max-width: 640px;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
     border-radius: 6px;
     cursor: pointer;
+    display: block;
   }
+
 
   /* Typography */
   .video-title {
@@ -60,7 +62,12 @@
 </style>
 </head>
 <body>
-<h1>OopToop</h1>
+<div class="topbar">
+  <a href="index.html" class="logo">
+    OopToop
+  </a>
+</div>
+
 <div id="video-feed"></div>
 
 <script>
