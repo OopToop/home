@@ -8,10 +8,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Gun.js for Decentralized Auth/Database -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
     <style>
         body {
             background-color: #ffffff;
             color: #0f0f0f;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+            border-radius: 10px;
         }
         .star {
             cursor: pointer;
@@ -26,13 +40,13 @@
         }
         video {
             background-color: black;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
     </style>
 </head>
 <body class="font-sans antialiased">
 
-    <!-- Top Navigation Bar -->
+    <!-- Top Navigation Bar (Exact copy from Home) -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
             <button class="p-2 hover:bg-gray-100 rounded-full">
@@ -55,7 +69,7 @@
         <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
             <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
                 <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
-                <input type="text" placeholder="Search" class="bg-transparent w-full outline-none text-base">
+                <input type="text" id="search-input" placeholder="Search" class="bg-transparent w-full outline-none text-base">
             </div>
             <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
                 <i data-lucide="search" class="w-5 h-5"></i>
@@ -65,12 +79,22 @@
         <div class="flex items-center gap-2 md:gap-4">
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
-            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium ml-2">U</div>
+            
+            <!-- Auth Section -->
+            <div id="auth-section" class="flex items-center ml-2">
+                <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer">
+                    U
+                </div>
+                <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
+                    <i data-lucide="user-circle" class="w-5 h-5"></i>
+                    Sign in
+                </button>
+            </div>
         </div>
     </nav>
 
     <!-- Main Player Layout -->
-    <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto">
+    <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto pb-10">
         <div class="flex flex-col lg:flex-row gap-6">
             
             <!-- Left Side: Video Player and Metadata -->
@@ -119,11 +143,10 @@
                 </div>
             </div>
 
-            <!-- Right Side: Sidebar/Up Next (Mock) -->
+            <!-- Right Side: Sidebar/Up Next -->
             <div class="lg:w-[350px] xl:w-[400px]">
                 <h2 class="font-bold mb-4">Up next</h2>
                 <div id="sidebar-feed" class="flex flex-col gap-4">
-                    <!-- Sidebar items would load here -->
                     <p class="text-gray-400 text-sm italic">Loading related videos...</p>
                 </div>
             </div>
@@ -132,9 +155,29 @@
     </main>
 
 <script>
-    // Initialize Lucide icons
     lucide.createIcons();
 
+    // --- GUN.JS INTEGRATION (Mirroring Home) ---
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const user = gun.user().recall({sessionStorage: true});
+    const userProfile = document.getElementById('user-profile');
+    const signinBtn = document.getElementById('signin-btn');
+
+    function updateAuthState() {
+        if (user.is) {
+            userProfile.classList.remove('hidden');
+            signinBtn.classList.add('hidden');
+            user.get('alias').once(name => {
+                if (name) userProfile.textContent = name.charAt(0).toUpperCase();
+            });
+        } else {
+            userProfile.classList.add('hidden');
+            signinBtn.classList.remove('hidden');
+        }
+    }
+    updateAuthState();
+
+    // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
     const repo = 'videos';
     const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
@@ -151,16 +194,14 @@
         fetch(metadataBase + videoFile)
             .then(res => res.json())
             .then(data => {
-                // UI Content
                 document.getElementById('video-title').textContent = data.title;
-                document.getElementById('video-description').textContent = data.description || "No description provided.";
+                document.getElementById('video-description').textContent = data.description || "No description.";
                 document.getElementById('video-date').textContent = data.date || "Unknown date";
                 
                 const uploader = data.author || data.uploader || 'OopToop Creator';
                 document.getElementById('uploader-name').textContent = uploader;
                 document.getElementById('channel-icon').textContent = uploader.charAt(0);
 
-                // Views logic
                 const viewsEl = document.getElementById('video-views');
                 let viewsKey = `views-${videoFile}`;
                 let views = localStorage.getItem(viewsKey) || data.views || 0;
@@ -168,25 +209,20 @@
                 localStorage.setItem(viewsKey, views);
                 viewsEl.textContent = views.toLocaleString();
 
-                // Video source
                 const player = document.getElementById('video-player');
                 player.src = videoBase + encodeURIComponent(data.filename);
 
-                // Star Rating logic
+                // Stars logic
                 const stars = document.querySelectorAll('.star');
                 let ratingKey = `rating-${videoFile}`;
                 let savedRating = localStorage.getItem(ratingKey) || 0;
 
                 const updateStars = (val) => {
                     stars.forEach(s => {
-                        if (parseInt(s.dataset.value) <= val) {
-                            s.classList.add('selected');
-                        } else {
-                            s.classList.remove('selected');
-                        }
+                        if (parseInt(s.dataset.value) <= val) s.classList.add('selected');
+                        else s.classList.remove('selected');
                     });
                 };
-
                 updateStars(savedRating);
 
                 stars.forEach(star => {
@@ -199,11 +235,15 @@
             })
             .catch(err => {
                 document.getElementById('video-title').textContent = "Error loading video";
-                console.error('Error loading video metadata:', err);
             });
-    } else {
-        document.getElementById('video-title').textContent = "No video selected";
     }
+
+    // --- SEARCH REDIRECT ---
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+        }
+    });
 </script>
 
 </body>
