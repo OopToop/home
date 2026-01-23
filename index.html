@@ -4,228 +4,137 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OopToop - Home</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+
 <style>
-body { background-color: #ffffff; color: #0f0f0f; }
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #d1d1d1; }
-.video-card:hover .video-thumb { border-radius: 0; transition: border-radius 0.2s ease; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+body { background:#fff; color:#0f0f0f; }
+.video-card:hover .video-thumb { border-radius:0; transition:.2s }
+.no-scrollbar::-webkit-scrollbar { display:none }
+.no-scrollbar { scrollbar-width:none }
 </style>
 </head>
+
 <body class="font-sans antialiased">
 
-<!-- Top Navigation Bar -->
-<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
-    <div class="flex items-center gap-4">
-        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="menu" class="w-6 h-6"></i></button>
-        <a href="index.html" class="flex items-center gap-1 group">
-            <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" alt="OopToop Logo" class="h-8 w-auto mr-1">
-            <span class="text-xl font-bold tracking-tighter">OopToop</span>
-        </a>
-    </div>
+<!-- NAV -->
+<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b">
+  <div class="flex items-center gap-4">
+    <i data-lucide="menu" class="w-6 h-6"></i>
+    <a href="index.html" class="flex items-center gap-2">
+      <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" class="h-8">
+      <span class="text-xl font-bold">OopToop</span>
+    </a>
+  </div>
 
-    <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
-        <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-            <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
-            <input type="text" id="search-input" placeholder="Search" class="bg-transparent w-full outline-none text-base">
-        </div>
-        <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
-            <i data-lucide="search" class="w-5 h-5"></i>
-        </button>
-    </div>
+  <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
 
-    <div class="flex items-center gap-2 md:gap-4">
-        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
-        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
+  <div id="auth-section" class="flex gap-2">
+    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
+    <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
+    <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded">Sign in</button>
+    <button id="register-btn" class="border px-3 py-1 text-green-600 rounded">Register</button>
+  </div>
+</nav>
 
-       <div id="auth-section" class="flex items-center ml-2 gap-2">
-    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"></div>
-    <button id="signout-btn" class="hidden flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-red-600 rounded-full text-sm font-medium hover:bg-red-50 transition-colors">Sign out</button>
-    <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">Sign in</button>
-    <button id="register-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-green-600 rounded-full text-sm font-medium hover:bg-green-50 transition-colors">Register</button>
-</div>
+<!-- CONTENT -->
+<main class="pt-16 px-6">
+
+  <!-- TAGS -->
+  <div id="tags-bar" class="flex gap-2 mb-6">
+    <button class="tag-btn bg-black text-white px-3 py-1 rounded" data-tag="All">All</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Music">Music</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Gaming">Gaming</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Tech">Tech</button>
+  </div>
+
+  <!-- VIDEO GRID -->
+  <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+
+</main>
 
 <script>
 lucide.createIcons();
 
-// --- GUN.JS SETUP ---
+/* ---------- AUTH (GUN) ---------- */
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const user = gun.user().recall({ sessionStorage: true });
+const user = gun.user().recall({ sessionStorage:true });
 
-const userProfile = document.getElementById('user-profile');
-const signinBtn = document.getElementById('signin-btn');
-const registerBtn = document.getElementById('register-btn');
-const signoutBtn = document.getElementById('signout-btn');
-
-function updateAuthUI() {
-    if (user.is) {
-        userProfile.classList.remove('hidden');
-        signoutBtn.classList.remove('hidden');
-        signinBtn.classList.add('hidden');
-        registerBtn.classList.add('hidden');
-
-        // Wait for alias to load
-        if (user.is.alias) {
-            userProfile.textContent = user.is.alias.charAt(0).toUpperCase();
-        } else {
-            user.get('alias').once(name => {
-                if (name) userProfile.textContent = name.charAt(0).toUpperCase();
-            });
-        }
-    } else {
-        userProfile.classList.add('hidden');
-        signoutBtn.classList.add('hidden');
-        signinBtn.classList.remove('hidden');
-        registerBtn.classList.remove('hidden');
-    }
-}
-
-// Listen for session changes
-user.recall({ sessionStorage: true }, ack => {
-    updateAuthUI();
-});
-
-// --- LOGIN & REGISTER ---
-signinBtn.addEventListener('click', () => {
-    const alias = prompt('Username:');
-    const pass = prompt('Password:');
-    if (!alias || !pass) return;
-    user.auth(alias, pass, ack => {
-        if (ack.err) alert('Login failed: ' + ack.err);
-        else updateAuthUI();
-    });
-});
-
-registerBtn.addEventListener('click', () => {
-    const alias = prompt('Choose a username:');
-    const pass = prompt('Choose a password:');
-    if (!alias || !pass) return;
-    user.create(alias, pass, ack => {
-        if (ack.err) alert('Register failed: ' + ack.err);
-        else alert('Account created! Please sign in.');
-    });
-});
-
-// --- SIGN OUT ---
-signoutBtn.addEventListener('click', () => {
-    user.leave();
-    updateAuthUI();
-});
-// --- VIDEO GRID LOGIC ---
-const owner = 'OopToop';
-const repo = 'videos';
-const metadataPath = 'metadata';
-const videoFeed = document.getElementById('video-feed');
-let allVideos = [];
-
-const tagMap = {
-    "Music":["Music","Song","Audio","Musical"],
-    "Gaming":["Gaming","Games","Gameplay","Play"],
-    "Live":["Live","Reallife","IRL","Stream"],
-    "Coding":["Coding","Programming","Dev","Software"],
-    "Tech":["Tech","Technology","Hardware","Gadgets"]
+const ui = {
+  profile: document.getElementById('user-profile'),
+  signin: document.getElementById('signin-btn'),
+  register: document.getElementById('register-btn'),
+  signout: document.getElementById('signout-btn')
 };
 
-function formatViews(count){
-    if(!count) return '0 views';
-    const num = parseInt(count);
-    if(num>=1e6) return (num/1e6).toFixed(1)+'M views';
-    if(num>=1e3) return (num/1e3).toFixed(1)+'K views';
-    return num+' views';
+function updateAuth() {
+  if (user.is) {
+    ui.profile.classList.remove('hidden');
+    ui.signout.classList.remove('hidden');
+    ui.signin.classList.add('hidden');
+    ui.register.classList.add('hidden');
+    user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
+  } else {
+    ui.profile.classList.add('hidden');
+    ui.signout.classList.add('hidden');
+    ui.signin.classList.remove('hidden');
+    ui.register.classList.remove('hidden');
+  }
 }
 
-function renderVideos(videosToDisplay){
-    videoFeed.innerHTML='';
-    if(videosToDisplay.length===0){
-        videoFeed.innerHTML='<p class="col-span-full text-center text-gray-500 py-10">No videos found.</p>';
-        return;
-    }
+updateAuth();
 
-    videosToDisplay.forEach(item=>{
-        const data = item.data;
-        const videoLink=`video.html?id=${encodeURIComponent(item.filename)}`;
-        const uploader=data.author||data.uploader||'Anonymous';
-        const views=formatViews(data.views||0);
-        const date=data.date||data.upload_date||'Recently';
+ui.signin.onclick = () => {
+  const u = prompt('Username');
+  const p = prompt('Password');
+  user.auth(u,p,ack=>ack.err?alert(ack.err):updateAuth());
+};
 
-        const card=document.createElement('div');
-        card.className='video-card group cursor-pointer flex flex-col';
+ui.register.onclick = () => {
+  const u = prompt('Username');
+  const p = prompt('Password');
+  user.create(u,p,ack=>ack.err?alert(ack.err):alert('Account created'));
+};
 
-        const thumbContainer=document.createElement('div');
-        thumbContainer.className='relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-100';
+ui.signout.onclick = () => { user.leave(); updateAuth(); };
 
-        const thumb=document.createElement('img');
-        thumb.src=`https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${encodeURIComponent(data.thumbnail)}`;
-        thumb.alt=data.title;
-        thumb.className='video-thumb w-full h-full object-cover group-hover:scale-105 transition-transform duration-200';
-        thumb.onerror=()=>{thumb.src='https://via.placeholder.com/640x360/f3f4f6/9ca3af?text=OopToop';};
+/* ---------- VIDEOS ---------- */
+const feed = document.getElementById('video-feed');
+let allVideos = [];
 
-        thumbContainer.appendChild(thumb);
+fetch('https://api.github.com/repos/OopToop/videos/contents/metadata')
+  .then(r=>r.json())
+  .then(files=>Promise.all(
+    files.filter(f=>f.name.endsWith('.json'))
+         .map(f=>fetch(f.download_url).then(r=>r.json()).then(d=>({file:f.name,data:d})))
+  ))
+  .then(videos=>{
+    allVideos = videos;
+    render(videos);
+  });
 
-        const details=document.createElement('div');
-        details.className='flex gap-3';
-
-        const channelIcon=document.createElement('div');
-        channelIcon.className='flex-shrink-0 w-9 h-9 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-xs font-bold uppercase';
-        channelIcon.textContent=uploader.charAt(0);
-
-        const textContainer=document.createElement('div');
-        textContainer.className='flex flex-col overflow-hidden';
-
-        const title=document.createElement('h3');
-        title.className='font-semibold text-base leading-tight mb-1 line-clamp-2 text-gray-900';
-        title.textContent=data.title||'Untitled Video';
-
-        const meta=document.createElement('div');
-        meta.className='text-sm text-gray-600';
-        meta.innerHTML=`<p class="hover:text-black transition-colors truncate">${uploader}</p><p>${views} • ${date}</p>`;
-
-        textContainer.appendChild(title);
-        textContainer.appendChild(meta);
-        details.appendChild(channelIcon);
-        details.appendChild(textContainer);
-
-        card.appendChild(thumbContainer);
-        card.appendChild(details);
-
-        card.addEventListener('click',()=>{window.location.href=videoLink;});
-
-        videoFeed.appendChild(card);
-    });
+function render(list){
+  feed.innerHTML='';
+  list.forEach(v=>{
+    const c=document.createElement('div');
+    c.className='video-card cursor-pointer';
+    c.innerHTML=`
+      <img class="video-thumb rounded-xl mb-2" src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
+      <h3 class="font-semibold">${v.data.title}</h3>
+    `;
+    c.onclick=()=>location.href=`video.html?id=${encodeURIComponent(v.file)}`;
+    feed.appendChild(c);
+  });
 }
 
-function filterByTag(category){
-    document.querySelectorAll('.tag-btn').forEach(btn=>{
-        if(btn.dataset.tag===category){btn.classList.add('bg-black','text-white');btn.classList.remove('bg-gray-100','text-gray-900');}
-        else{btn.classList.remove('bg-black','text-white');btn.classList.add('bg-gray-100','text-gray-900');}
-    });
+document.getElementById('search-input').oninput=e=>{
+  const q=e.target.value.toLowerCase();
+  render(allVideos.filter(v=>v.data.title?.toLowerCase().includes(q)));
+};
+</script>
 
-    if(category==='All'){renderVideos(allVideos);return;}
-
-    const relatedTags=tagMap[category]||[category];
-    const filtered=allVideos.filter(item=>{
-        const videoTags=(item.data.tags||"").toString().toLowerCase();
-        return relatedTags.some(t=>videoTags.includes(t.toLowerCase()));
-    });
-    renderVideos(filtered);
-}
-
-fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
-    .then(res=>res.json())
-    .then(files=>{
-        const jsonFiles=files.filter(f=>f.name.endsWith('.json'));
-        const fetchPromises=jsonFiles.map(file=>fetch(file.download_url).then(r=>r.json()).then(data=>({filename:file.name,data})));
-        Promise.all(fetchPromises).then(results=>{allVideos=results;renderVideos(allVideos);});
-    });
-
-document.getElementById('tags-bar').addEventListener('click',e=>{const btn=e.target.closest('.tag-btn');if(btn) filterByTag(btn.dataset.tag);});
-document.getElementById('search-input').addEventListener('input',e=>{const query=e.target.value.toLowerCase();const filtered=allVideos.filter(item=>{const title=(item.data.title||"").toLowerCase();const author=(item.data.author||"").toLowerCase();return title.includes(query)||author.includes(query);});renderVideos(filtered);});
 </body>
 </html>
