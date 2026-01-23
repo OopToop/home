@@ -51,12 +51,10 @@
             </button>
             <a href="index.html" class="flex items-center gap-1 group">
                 <div class="flex items-center">
-                    <!-- Updated Logo URL -->
                     <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
                          alt="OopToop Logo" 
                          class="h-8 w-auto mr-1"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <!-- Fallback Icon if logo fails -->
                     <div class="hidden bg-red-600 rounded-lg p-1 group-hover:bg-red-700 transition-colors">
                         <i data-lucide="play" class="w-5 h-5 text-white fill-current"></i>
                     </div>
@@ -73,9 +71,7 @@
             <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
                 <i data-lucide="search" class="w-5 h-5"></i>
             </button>
-            <button class="ml-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full">
-                <i data-lucide="mic" class="w-5 h-5"></i>
-            </button>
+            <!-- Microphone button removed from here -->
         </div>
 
         <div class="flex items-center gap-2 md:gap-4">
@@ -88,13 +84,13 @@
     <div class="flex pt-14">
         <!-- Sidebar (Desktop) -->
         <aside class="hidden lg:flex flex-col w-64 fixed left-0 bottom-0 top-14 overflow-y-auto px-2 py-4 gap-1 border-r border-gray-50">
-            <a href="#" class="flex items-center gap-5 p-3 bg-gray-100 rounded-xl font-medium"><i data-lucide="home" class="w-5 h-5"></i> Home</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="play-square" class="w-5 h-5"></i> Shorts</a>
+            <a href="index.html" class="flex items-center gap-5 p-3 bg-gray-100 rounded-xl font-medium"><i data-lucide="home" class="w-5 h-5"></i> Home</a>
+            <!-- Shorts button removed from here -->
             <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl border-b border-gray-100 mb-2 pb-4"><i data-lucide="layers" class="w-5 h-5"></i> Subscriptions</a>
             
             <span class="px-3 py-2 text-sm font-semibold">You</span>
             <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="user-square" class="w-5 h-5"></i> Your channel</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="history" class="w-5 h-5"></i> History</a>
+            <!-- History button removed from here -->
             <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i> Watch later</a>
         </aside>
 
@@ -128,7 +124,6 @@
     </div>
 
 <script>
-    // Initialize Lucide icons
     lucide.createIcons();
 
     const owner = 'OopToop';
@@ -136,7 +131,6 @@
     const metadataPath = 'metadata';
     const videoFeed = document.getElementById('video-feed');
 
-    // Helper to format view numbers (e.g., 1000 -> 1K)
     function formatViews(count) {
         if (!count) return '0 views';
         const num = parseInt(count);
@@ -145,15 +139,11 @@
         return num + ' views';
     }
 
-    // Fetch all JSON files from metadata folder using GitHub API
     fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
         .then(res => res.json())
         .then(files => {
             if (!Array.isArray(files)) throw new Error('Invalid response from GitHub');
-            
-            // Clear loading skeleton
             videoFeed.innerHTML = '';
-
             const jsonFiles = files.filter(f => f.name.endsWith('.json'));
             const fetchPromises = jsonFiles.map(file => fetch(file.download_url).then(r => r.json()));
 
@@ -162,8 +152,6 @@
                     allData.forEach((data, i) => {
                         const videoId = jsonFiles[i].name;
                         const videoLink = `video.html?id=${encodeURIComponent(videoId)}`;
-                        
-                        // Extracting real data from metadata JSON
                         const uploader = data.author || data.uploader || 'Anonymous';
                         const views = formatViews(data.views || 0);
                         const date = data.date || data.upload_date || 'Recently';
@@ -171,7 +159,6 @@
                         const card = document.createElement('div');
                         card.className = 'video-card group cursor-pointer flex flex-col';
                         
-                        // Thumbnail Container
                         const thumbContainer = document.createElement('div');
                         thumbContainer.className = 'relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-100';
 
@@ -183,11 +170,9 @@
 
                         thumbContainer.appendChild(thumb);
 
-                        // Content Details
                         const details = document.createElement('div');
                         details.className = 'flex gap-3';
 
-                        // Channel Icon (First letter of uploader)
                         const channelIcon = document.createElement('div');
                         channelIcon.className = 'flex-shrink-0 w-9 h-9 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-xs font-bold uppercase';
                         channelIcon.textContent = uploader.charAt(0);
@@ -214,7 +199,6 @@
                         card.appendChild(thumbContainer);
                         card.appendChild(details);
 
-                        // Click event
                         card.addEventListener('click', () => {
                             window.location.href = videoLink;
                         });
