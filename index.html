@@ -21,14 +21,25 @@ body { background:#fff; color:#0f0f0f; }
 <body class="font-sans antialiased">
 
 <!-- NAV -->
-<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b">
-  <div class="flex items-center gap-4">
-    <i data-lucide="menu" class="w-6 h-6"></i>
-    <a href="index.html" class="flex items-center gap-2">
-      <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" class="h-8">
-      <span class="text-xl font-bold">OopToop</span>
-    </a>
-  </div>
+ <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
+        <div class="flex items-center gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <a href="index.html" class="flex items-center gap-1 group">
+                <div class="flex items-center">
+                    <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
+                         alt="OopToop Logo" 
+                         class="h-8 w-auto mr-1"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div class="hidden bg-red-600 rounded-lg p-1 group-hover:bg-red-700 transition-colors">
+                        <i data-lucide="play" class="w-5 h-5 text-white fill-current"></i>
+                    </div>
+                </div>
+                <span class="text-xl font-bold tracking-tighter">OopToop</span>
+            </a>
+        </div>
 
   <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
 
