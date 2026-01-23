@@ -227,6 +227,5 @@ fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
 
 document.getElementById('tags-bar').addEventListener('click',e=>{const btn=e.target.closest('.tag-btn');if(btn) filterByTag(btn.dataset.tag);});
 document.getElementById('search-input').addEventListener('input',e=>{const query=e.target.value.toLowerCase();const filtered=allVideos.filter(item=>{const title=(item.data.title||"").toLowerCase();const author=(item.data.author||"").toLowerCase();return title.includes(query)||author.includes(query);});renderVideos(filtered);});
-</script>
 </body>
 </html>
