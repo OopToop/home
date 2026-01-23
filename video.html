@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Gun.js for Decentralized Auth/Database -->
     <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
@@ -80,18 +81,6 @@
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
             
-            <!-- Auth Section -->
-            <div id="auth-section" class="flex items-center ml-2">
-                <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer">
-                    U
-                </div>
-                <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
-                    <i data-lucide="user-circle" class="w-5 h-5"></i>
-                    Sign in
-                </button>
-            </div>
-        </div>
-    </nav>
 
     <!-- Main Player Layout -->
     <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto pb-10">
@@ -153,29 +142,67 @@
 
         </div>
     </main>
+<div id="auth-section" class="flex items-center ml-2 gap-2">
+    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"></div>
+    <button id="signout-btn" class="hidden flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-red-600 rounded-full text-sm font-medium hover:bg-red-50 transition-colors">Sign out</button>
+    <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
+        <i data-lucide="user-circle" class="w-5 h-5"></i> Sign in
+    </button>
+</div>
 
 <script>
-    lucide.createIcons();
+lucide.createIcons();
 
-    // --- GUN.JS INTEGRATION (Mirroring Home) ---
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const user = gun.user().recall({sessionStorage: true});
-    const userProfile = document.getElementById('user-profile');
-    const signinBtn = document.getElementById('signin-btn');
+// --- GUN.JS SETUP ---
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+const user = gun.user().recall({ sessionStorage: true });
 
-    function updateAuthState() {
-        if (user.is) {
-            userProfile.classList.remove('hidden');
-            signinBtn.classList.add('hidden');
+const userProfile = document.getElementById('user-profile');
+const signinBtn = document.getElementById('signin-btn');
+const signoutBtn = document.getElementById('signout-btn');
+
+function updateAuthUI() {
+    if (user.is) {
+        userProfile.classList.remove('hidden');
+        signoutBtn.classList.remove('hidden');
+        signinBtn.classList.add('hidden');
+
+        // Display first letter of alias
+        if (user.is.alias) {
+            userProfile.textContent = user.is.alias.charAt(0).toUpperCase();
+        } else {
             user.get('alias').once(name => {
                 if (name) userProfile.textContent = name.charAt(0).toUpperCase();
             });
-        } else {
-            userProfile.classList.add('hidden');
-            signinBtn.classList.remove('hidden');
         }
+    } else {
+        userProfile.classList.add('hidden');
+        signoutBtn.classList.add('hidden');
+        signinBtn.classList.remove('hidden');
     }
-    updateAuthState();
+}
+
+// Listen for session recall changes
+user.recall({ sessionStorage: true }, ack => updateAuthUI());
+
+// --- LOGIN ---
+signinBtn.addEventListener('click', () => {
+    const alias = prompt('Username:');
+    const pass = prompt('Password:');
+    if (!alias || !pass) return;
+    user.auth(alias, pass, ack => {
+        if (ack.err) alert('Login failed: ' + ack.err);
+        else updateAuthUI();
+    });
+});
+
+// --- SIGN OUT ---
+signoutBtn.addEventListener('click', () => {
+    user.leave();
+    updateAuthUI();
+});
+
+
 
     // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
