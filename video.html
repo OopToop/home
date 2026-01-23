@@ -66,30 +66,13 @@
             </a>
         </div>
 
-        <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
-            <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-                <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
-                <input type="text" id="search-input" placeholder="Search" class="bg-transparent w-full outline-none text-base">
-            </div>
-            <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
-                <i data-lucide="search" class="w-5 h-5"></i>
-            </button>
-        </div>
+        <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1 flex-1 max-w-[720px] mx-10">
 
-        <div class="flex items-center gap-2 md:gap-4">
-            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
-            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
-            
-            <!-- Auth Section -->
-            <div id="auth-section" class="flex items-center ml-2">
-                <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer">
-                    U
-                </div>
-                <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
-                    <i data-lucide="user-circle" class="w-5 h-5"></i>
-                    Sign in
-                </button>
-            </div>
+        <div id="auth-section" class="flex gap-2 items-center">
+            <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"></div>
+            <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded text-sm font-medium">Sign out</button>
+            <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded text-sm font-medium">Sign in</button>
+            <button id="register-btn" class="border px-3 py-1 text-green-600 rounded text-sm font-medium">Register</button>
         </div>
     </nav>
 
@@ -157,25 +140,47 @@
 <script>
     lucide.createIcons();
 
-    // --- GUN.JS INTEGRATION (Mirroring Home) ---
+    /* ---------- AUTH (GUN) - EXACT COPY FROM HOME ---------- */
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const user = gun.user().recall({sessionStorage: true});
-    const userProfile = document.getElementById('user-profile');
-    const signinBtn = document.getElementById('signin-btn');
+    const user = gun.user().recall({ sessionStorage: true });
 
-    function updateAuthState() {
+    const ui = {
+        profile: document.getElementById('user-profile'),
+        signin: document.getElementById('signin-btn'),
+        register: document.getElementById('register-btn'),
+        signout: document.getElementById('signout-btn')
+    };
+
+    function updateAuth() {
         if (user.is) {
-            userProfile.classList.remove('hidden');
-            signinBtn.classList.add('hidden');
-            user.get('alias').once(name => {
-                if (name) userProfile.textContent = name.charAt(0).toUpperCase();
-            });
+            ui.profile.classList.remove('hidden');
+            ui.signout.classList.remove('hidden');
+            ui.signin.classList.add('hidden');
+            ui.register.classList.add('hidden');
+            user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
         } else {
-            userProfile.classList.add('hidden');
-            signinBtn.classList.remove('hidden');
+            ui.profile.classList.add('hidden');
+            ui.signout.classList.add('hidden');
+            ui.signin.classList.remove('hidden');
+            ui.register.classList.remove('hidden');
         }
     }
-    updateAuthState();
+
+    updateAuth();
+
+    ui.signin.onclick = () => {
+        const u = prompt('Username');
+        const p = prompt('Password');
+        user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
+    };
+
+    ui.register.onclick = () => {
+        const u = prompt('Username');
+        const p = prompt('Password');
+        user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created'));
+    };
+
+    ui.signout.onclick = () => { user.leave(); updateAuth(); };
 
     // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
