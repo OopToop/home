@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Gun.js for Decentralized Auth/Database -->
+    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
     <style>
         body {
             background-color: #ffffff;
@@ -76,7 +79,19 @@
         <div class="flex items-center gap-2 md:gap-4">
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
             <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
-            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium ml-2">U</div>
+            
+            <!-- Auth Section -->
+            <div id="auth-section" class="flex items-center ml-2">
+                <!-- User Profile (Hidden by default) -->
+                <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer">
+                    U
+                </div>
+                <!-- Sign In Button (Shown if signed out) -->
+                <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
+                    <i data-lucide="user-circle" class="w-5 h-5"></i>
+                    Sign in
+                </button>
+            </div>
         </div>
     </nav>
 
@@ -123,14 +138,47 @@
 <script>
     lucide.createIcons();
 
+    // --- GUN.JS INTEGRATION ---
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // Using a public relay
+    const user = gun.user().recall({sessionStorage: true});
+
+    const userProfile = document.getElementById('user-profile');
+    const signinBtn = document.getElementById('signin-btn');
+
+    // Check Auth State
+    function updateAuthState() {
+        if (user.is) {
+            userProfile.classList.remove('hidden');
+            signinBtn.classList.add('hidden');
+            // Try to get user alias for the icon
+            user.get('alias').once(name => {
+                if (name) userProfile.textContent = name.charAt(0).toUpperCase();
+            });
+        } else {
+            userProfile.classList.add('hidden');
+            signinBtn.classList.remove('hidden');
+        }
+    }
+
+    // Call update on init
+    updateAuthState();
+
+    // Basic Sign In Simulation (Gun.js requires actual auth logic, 
+    // but for the UI requirement, we track the session recall)
+    signinBtn.addEventListener('click', () => {
+        // This is where you'd trigger your login modal/logic
+        // For now, it's a placeholder for your existing gun.js auth system
+        console.log("Redirect to login or trigger gun.auth...");
+    });
+
+    // --- VIDEO LOADING & FILTERING ---
     const owner = 'OopToop';
     const repo = 'videos';
     const metadataPath = 'metadata';
     const videoFeed = document.getElementById('video-feed');
     
-    let allVideos = []; // Store loaded video data for filtering
+    let allVideos = []; 
 
-    // Mapping for tag filtering logic
     const tagMap = {
         "Music": ["Music", "Song", "Audio", "Musical"],
         "Gaming": ["Gaming", "Games", "Gameplay", "Play"],
@@ -149,7 +197,6 @@
 
     function renderVideos(videosToDisplay) {
         videoFeed.innerHTML = '';
-        
         if (videosToDisplay.length === 0) {
             videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">No videos found for this category.</p>`;
             return;
@@ -213,14 +260,11 @@
         });
     }
 
-    // Filter Logic
     function filterByTag(category) {
-        // Update button styles
         document.querySelectorAll('.tag-btn').forEach(btn => {
             if (btn.dataset.tag === category) {
-                btn.classList.replace('bg-gray-100', 'bg-black');
-                btn.classList.replace('text-gray-900', 'text-white');
-                btn.classList.add('text-white', 'bg-black');
+                btn.classList.add('bg-black', 'text-white');
+                btn.classList.remove('bg-gray-100', 'text-gray-900');
             } else {
                 btn.classList.remove('bg-black', 'text-white');
                 btn.classList.add('bg-gray-100', 'text-gray-900');
@@ -237,47 +281,30 @@
             const videoTags = (item.data.tags || "").toString().toLowerCase();
             return relatedTags.some(t => videoTags.includes(t.toLowerCase()));
         });
-
         renderVideos(filtered);
     }
 
-    // Initial Fetch
     fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
         .then(res => res.json())
         .then(files => {
-            if (!Array.isArray(files)) throw new Error('Invalid response from GitHub');
-            
+            if (!Array.isArray(files)) throw new Error('Invalid response');
             const jsonFiles = files.filter(f => f.name.endsWith('.json'));
             const fetchPromises = jsonFiles.map(file => 
                 fetch(file.download_url)
                     .then(r => r.json())
                     .then(data => ({ filename: file.name, data }))
             );
-
-            Promise.all(fetchPromises)
-                .then(results => {
-                    allVideos = results;
-                    renderVideos(allVideos);
-                })
-                .catch(err => {
-                    videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">Error loading metadata contents.</p>`;
-                    console.error('Error loading metadata:', err);
-                });
-        })
-        .catch(err => {
-            videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">GitHub Repository connection failed.</p>`;
-            console.error('Error fetching metadata folder:', err);
+            Promise.all(fetchPromises).then(results => {
+                allVideos = results;
+                renderVideos(allVideos);
+            });
         });
 
-    // Event Listeners for Tags
     document.getElementById('tags-bar').addEventListener('click', (e) => {
         const btn = e.target.closest('.tag-btn');
-        if (btn) {
-            filterByTag(btn.dataset.tag);
-        }
+        if (btn) filterByTag(btn.dataset.tag);
     });
 
-    // Optional: Search bar filtering
     document.getElementById('search-input').addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         const filtered = allVideos.filter(item => {
