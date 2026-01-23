@@ -1,319 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OopToop - Home</title>
-    <!-- Tailwind CSS for modern styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Gun.js for Decentralized Auth/Database -->
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-    <style>
-        body {
-            background-color: #ffffff;
-            color: #0f0f0f;
-        }
-        /* Custom scrollbar for a cleaner look */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #e5e5e5;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #d1d1d1;
-        }
-        .video-card:hover .video-thumb {
-            border-radius: 0;
-            transition: border-radius 0.2s ease;
-        }
-        /* Hide horizontal scrollbar for tags */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OopToop - Home</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+<style>
+body { background-color: #ffffff; color: #0f0f0f; }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #d1d1d1; }
+.video-card:hover .video-thumb { border-radius: 0; transition: border-radius 0.2s ease; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
 </head>
 <body class="font-sans antialiased">
 
-    <!-- Top Navigation Bar -->
-    <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
-        <div class="flex items-center gap-4">
-            <button class="p-2 hover:bg-gray-100 rounded-full">
-                <i data-lucide="menu" class="w-6 h-6"></i>
-            </button>
-            <a href="index.html" class="flex items-center gap-1 group">
-                <div class="flex items-center">
-                    <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
-                         alt="OopToop Logo" 
-                         class="h-8 w-auto mr-1"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="hidden bg-red-600 rounded-lg p-1 group-hover:bg-red-700 transition-colors">
-                        <i data-lucide="play" class="w-5 h-5 text-white fill-current"></i>
-                    </div>
-                </div>
-                <span class="text-xl font-bold tracking-tighter">OopToop</span>
-            </a>
-        </div>
-
-        <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
-            <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
-                <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
-                <input type="text" id="search-input" placeholder="Search" class="bg-transparent w-full outline-none text-base">
-            </div>
-            <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
-                <i data-lucide="search" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <div class="flex items-center gap-2 md:gap-4">
-            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
-            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
-            
-            <!-- Auth Section -->
-            <div id="auth-section" class="flex items-center ml-2">
-                <!-- User Profile (Hidden by default) -->
-                <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer">
-                    U
-                </div>
-                <!-- Sign In Button (Shown if signed out) -->
-                <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">
-                    <i data-lucide="user-circle" class="w-5 h-5"></i>
-                    Sign in
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <div class="flex pt-14">
-        <!-- Sidebar -->
-        <aside class="hidden lg:flex flex-col w-64 fixed left-0 bottom-0 top-14 overflow-y-auto px-2 py-4 gap-1 border-r border-gray-50">
-            <a href="index.html" class="flex items-center gap-5 p-3 bg-gray-100 rounded-xl font-medium"><i data-lucide="home" class="w-5 h-5"></i> Home</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl border-b border-gray-100 mb-2 pb-4"><i data-lucide="layers" class="w-5 h-5"></i> Subscriptions</a>
-            
-            <span class="px-3 py-2 text-sm font-semibold">You</span>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="user-square" class="w-5 h-5"></i> Your channel</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i> Watch later</a>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 lg:ml-64 p-4 md:p-6">
-            <!-- Tags/Filters Bar -->
-            <div id="tags-bar" class="flex gap-3 mb-6 overflow-x-auto no-scrollbar pb-2">
-                <button data-tag="All" class="tag-btn bg-black text-white px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">All</button>
-                <button data-tag="Music" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Music</button>
-                <button data-tag="Gaming" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Gaming</button>
-                <button data-tag="Live" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Live</button>
-                <button data-tag="Coding" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Coding</button>
-                <button data-tag="Tech" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Tech</button>
-            </div>
-
-            <!-- Video Grid -->
-            <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-                <!-- Loading State placeholder -->
-                <div class="animate-pulse">
-                    <div class="bg-gray-200 aspect-video rounded-xl mb-3"></div>
-                    <div class="flex gap-3">
-                        <div class="bg-gray-200 w-10 h-10 rounded-full"></div>
-                        <div class="flex-1 space-y-2">
-                            <div class="bg-gray-200 h-4 w-3/4 rounded"></div>
-                            <div class="bg-gray-200 h-3 w-1/2 rounded"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+<!-- Top Navigation Bar -->
+<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
+    <div class="flex items-center gap-4">
+        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="menu" class="w-6 h-6"></i></button>
+        <a href="index.html" class="flex items-center gap-1 group">
+            <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" alt="OopToop Logo" class="h-8 w-auto mr-1">
+            <span class="text-xl font-bold tracking-tighter">OopToop</span>
+        </a>
     </div>
 
+    <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
+        <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+            <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
+            <input type="text" id="search-input" placeholder="Search" class="bg-transparent w-full outline-none text-base">
+        </div>
+        <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
+            <i data-lucide="search" class="w-5 h-5"></i>
+        </button>
+    </div>
+
+    <div class="flex items-center gap-2 md:gap-4">
+        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
+        <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
+
+        <!-- Auth Section -->
+        <div id="auth-section" class="flex items-center ml-2 gap-2">
+            <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"></div>
+            <button id="signin-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-blue-600 rounded-full text-sm font-medium hover:bg-blue-50 transition-colors">Sign in</button>
+            <button id="register-btn" class="flex items-center gap-2 px-3 py-1.5 border border-gray-300 text-green-600 rounded-full text-sm font-medium hover:bg-green-50 transition-colors">Register</button>
+        </div>
+    </div>
+</nav>
+
+<div class="flex pt-14">
+    <!-- Sidebar -->
+    <aside class="hidden lg:flex flex-col w-64 fixed left-0 bottom-0 top-14 overflow-y-auto px-2 py-4 gap-1 border-r border-gray-50">
+        <a href="index.html" class="flex items-center gap-5 p-3 bg-gray-100 rounded-xl font-medium"><i data-lucide="home" class="w-5 h-5"></i> Home</a>
+        <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl border-b border-gray-100 mb-2 pb-4"><i data-lucide="layers" class="w-5 h-5"></i> Subscriptions</a>
+        <span class="px-3 py-2 text-sm font-semibold">You</span>
+        <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="user-square" class="w-5 h-5"></i> Your channel</a>
+        <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i> Watch later</a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 lg:ml-64 p-4 md:p-6">
+        <div id="tags-bar" class="flex gap-3 mb-6 overflow-x-auto no-scrollbar pb-2">
+            <button data-tag="All" class="tag-btn bg-black text-white px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">All</button>
+            <button data-tag="Music" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Music</button>
+            <button data-tag="Gaming" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Gaming</button>
+            <button data-tag="Live" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Live</button>
+            <button data-tag="Coding" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Coding</button>
+            <button data-tag="Tech" class="tag-btn bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap transition-colors">Tech</button>
+        </div>
+
+        <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+            <!-- Loading skeleton -->
+            <div class="animate-pulse">
+                <div class="bg-gray-200 aspect-video rounded-xl mb-3"></div>
+                <div class="flex gap-3">
+                    <div class="bg-gray-200 w-10 h-10 rounded-full"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="bg-gray-200 h-4 w-3/4 rounded"></div>
+                        <div class="bg-gray-200 h-3 w-1/2 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
 <script>
-    lucide.createIcons();
+lucide.createIcons();
 
-    // --- GUN.JS INTEGRATION ---
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // Using a public relay
-    const user = gun.user().recall({sessionStorage: true});
+// --- GUN.JS SETUP ---
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+const user = gun.user().recall({ sessionStorage: true });
 
-    const userProfile = document.getElementById('user-profile');
-    const signinBtn = document.getElementById('signin-btn');
+const userProfile = document.getElementById('user-profile');
+const signinBtn = document.getElementById('signin-btn');
+const registerBtn = document.getElementById('register-btn');
 
-    // Check Auth State
-    function updateAuthState() {
-        if (user.is) {
-            userProfile.classList.remove('hidden');
-            signinBtn.classList.add('hidden');
-            // Try to get user alias for the icon
-            user.get('alias').once(name => {
-                if (name) userProfile.textContent = name.charAt(0).toUpperCase();
-            });
-        } else {
-            userProfile.classList.add('hidden');
-            signinBtn.classList.remove('hidden');
-        }
+function updateAuthUI() {
+    if (user.is) {
+        userProfile.classList.remove('hidden');
+        signinBtn.classList.add('hidden');
+        registerBtn.classList.add('hidden');
+        userProfile.textContent = user.is.alias ? user.is.alias.charAt(0).toUpperCase() : 'U';
+    } else {
+        userProfile.classList.add('hidden');
+        signinBtn.classList.remove('hidden');
+        registerBtn.classList.remove('hidden');
+    }
+}
+
+// Update UI immediately
+updateAuthUI();
+
+// --- LOGIN & REGISTER MODALS/PLACEHOLDER ---
+signinBtn.addEventListener('click', () => {
+    const alias = prompt('Username:');
+    const pass = prompt('Password:');
+    if (!alias || !pass) return;
+    user.auth(alias, pass, ack => {
+        if (ack.err) alert('Login failed: ' + ack.err);
+        else updateAuthUI();
+    });
+});
+
+registerBtn.addEventListener('click', () => {
+    const alias = prompt('Choose a username:');
+    const pass = prompt('Choose a password:');
+    if (!alias || !pass) return;
+    user.create(alias, pass, ack => {
+        if (ack.err) alert('Register failed: ' + ack.err);
+        else alert('Account created! Please sign in.');
+    });
+});
+
+// --- VIDEO GRID LOGIC ---
+const owner = 'OopToop';
+const repo = 'videos';
+const metadataPath = 'metadata';
+const videoFeed = document.getElementById('video-feed');
+let allVideos = [];
+
+const tagMap = {
+    "Music":["Music","Song","Audio","Musical"],
+    "Gaming":["Gaming","Games","Gameplay","Play"],
+    "Live":["Live","Reallife","IRL","Stream"],
+    "Coding":["Coding","Programming","Dev","Software"],
+    "Tech":["Tech","Technology","Hardware","Gadgets"]
+};
+
+function formatViews(count){
+    if(!count) return '0 views';
+    const num = parseInt(count);
+    if(num>=1e6) return (num/1e6).toFixed(1)+'M views';
+    if(num>=1e3) return (num/1e3).toFixed(1)+'K views';
+    return num+' views';
+}
+
+function renderVideos(videosToDisplay){
+    videoFeed.innerHTML='';
+    if(videosToDisplay.length===0){
+        videoFeed.innerHTML='<p class="col-span-full text-center text-gray-500 py-10">No videos found.</p>';
+        return;
     }
 
-    // Call update on init
-    updateAuthState();
+    videosToDisplay.forEach(item=>{
+        const data = item.data;
+        const videoLink=`video.html?id=${encodeURIComponent(item.filename)}`;
+        const uploader=data.author||data.uploader||'Anonymous';
+        const views=formatViews(data.views||0);
+        const date=data.date||data.upload_date||'Recently';
 
-    // Basic Sign In Simulation (Gun.js requires actual auth logic, 
-    // but for the UI requirement, we track the session recall)
-    signinBtn.addEventListener('click', () => {
-        // This is where you'd trigger your login modal/logic
-        // For now, it's a placeholder for your existing gun.js auth system
-        console.log("Redirect to login or trigger gun.auth...");
+        const card=document.createElement('div');
+        card.className='video-card group cursor-pointer flex flex-col';
+
+        const thumbContainer=document.createElement('div');
+        thumbContainer.className='relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-100';
+
+        const thumb=document.createElement('img');
+        thumb.src=`https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${encodeURIComponent(data.thumbnail)}`;
+        thumb.alt=data.title;
+        thumb.className='video-thumb w-full h-full object-cover group-hover:scale-105 transition-transform duration-200';
+        thumb.onerror=()=>{thumb.src='https://via.placeholder.com/640x360/f3f4f6/9ca3af?text=OopToop';};
+
+        thumbContainer.appendChild(thumb);
+
+        const details=document.createElement('div');
+        details.className='flex gap-3';
+
+        const channelIcon=document.createElement('div');
+        channelIcon.className='flex-shrink-0 w-9 h-9 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-xs font-bold uppercase';
+        channelIcon.textContent=uploader.charAt(0);
+
+        const textContainer=document.createElement('div');
+        textContainer.className='flex flex-col overflow-hidden';
+
+        const title=document.createElement('h3');
+        title.className='font-semibold text-base leading-tight mb-1 line-clamp-2 text-gray-900';
+        title.textContent=data.title||'Untitled Video';
+
+        const meta=document.createElement('div');
+        meta.className='text-sm text-gray-600';
+        meta.innerHTML=`<p class="hover:text-black transition-colors truncate">${uploader}</p><p>${views} • ${date}</p>`;
+
+        textContainer.appendChild(title);
+        textContainer.appendChild(meta);
+        details.appendChild(channelIcon);
+        details.appendChild(textContainer);
+
+        card.appendChild(thumbContainer);
+        card.appendChild(details);
+
+        card.addEventListener('click',()=>{window.location.href=videoLink;});
+
+        videoFeed.appendChild(card);
+    });
+}
+
+function filterByTag(category){
+    document.querySelectorAll('.tag-btn').forEach(btn=>{
+        if(btn.dataset.tag===category){btn.classList.add('bg-black','text-white');btn.classList.remove('bg-gray-100','text-gray-900');}
+        else{btn.classList.remove('bg-black','text-white');btn.classList.add('bg-gray-100','text-gray-900');}
     });
 
-    // --- VIDEO LOADING & FILTERING ---
-    const owner = 'OopToop';
-    const repo = 'videos';
-    const metadataPath = 'metadata';
-    const videoFeed = document.getElementById('video-feed');
-    
-    let allVideos = []; 
+    if(category==='All'){renderVideos(allVideos);return;}
 
-    const tagMap = {
-        "Music": ["Music", "Song", "Audio", "Musical"],
-        "Gaming": ["Gaming", "Games", "Gameplay", "Play"],
-        "Live": ["Live", "Reallife", "IRL", "Stream"],
-        "Coding": ["Coding", "Programming", "Dev", "Software"],
-        "Tech": ["Tech", "Technology", "Hardware", "Gadgets"]
-    };
+    const relatedTags=tagMap[category]||[category];
+    const filtered=allVideos.filter(item=>{
+        const videoTags=(item.data.tags||"").toString().toLowerCase();
+        return relatedTags.some(t=>videoTags.includes(t.toLowerCase()));
+    });
+    renderVideos(filtered);
+}
 
-    function formatViews(count) {
-        if (!count) return '0 views';
-        const num = parseInt(count);
-        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M views';
-        if (num >= 1000) return (num / 1000).toFixed(1) + 'K views';
-        return num + ' views';
-    }
-
-    function renderVideos(videosToDisplay) {
-        videoFeed.innerHTML = '';
-        if (videosToDisplay.length === 0) {
-            videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">No videos found for this category.</p>`;
-            return;
-        }
-
-        videosToDisplay.forEach((item) => {
-            const data = item.data;
-            const videoLink = `video.html?id=${encodeURIComponent(item.filename)}`;
-            const uploader = data.author || data.uploader || 'Anonymous';
-            const views = formatViews(data.views || 0);
-            const date = data.date || data.upload_date || 'Recently';
-            
-            const card = document.createElement('div');
-            card.className = 'video-card group cursor-pointer flex flex-col';
-            
-            const thumbContainer = document.createElement('div');
-            thumbContainer.className = 'relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-100';
-
-            const thumb = document.createElement('img');
-            thumb.src = `https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${encodeURIComponent(data.thumbnail)}`;
-            thumb.alt = data.title;
-            thumb.className = 'video-thumb w-full h-full object-cover group-hover:scale-105 transition-transform duration-200';
-            thumb.onerror = () => { thumb.src = 'https://via.placeholder.com/640x360/f3f4f6/9ca3af?text=OopToop'; };
-
-            thumbContainer.appendChild(thumb);
-
-            const details = document.createElement('div');
-            details.className = 'flex gap-3';
-
-            const channelIcon = document.createElement('div');
-            channelIcon.className = 'flex-shrink-0 w-9 h-9 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-xs font-bold uppercase';
-            channelIcon.textContent = uploader.charAt(0);
-
-            const textContainer = document.createElement('div');
-            textContainer.className = 'flex flex-col overflow-hidden';
-
-            const title = document.createElement('h3');
-            title.className = 'font-semibold text-base leading-tight mb-1 line-clamp-2 text-gray-900';
-            title.textContent = data.title || 'Untitled Video';
-
-            const meta = document.createElement('div');
-            meta.className = 'text-sm text-gray-600';
-            meta.innerHTML = `
-                <p class="hover:text-black transition-colors truncate">${uploader}</p>
-                <p>${views} • ${date}</p>
-            `;
-
-            textContainer.appendChild(title);
-            textContainer.appendChild(meta);
-            details.appendChild(channelIcon);
-            details.appendChild(textContainer);
-
-            card.appendChild(thumbContainer);
-            card.appendChild(details);
-
-            card.addEventListener('click', () => {
-                window.location.href = videoLink;
-            });
-
-            videoFeed.appendChild(card);
-        });
-    }
-
-    function filterByTag(category) {
-        document.querySelectorAll('.tag-btn').forEach(btn => {
-            if (btn.dataset.tag === category) {
-                btn.classList.add('bg-black', 'text-white');
-                btn.classList.remove('bg-gray-100', 'text-gray-900');
-            } else {
-                btn.classList.remove('bg-black', 'text-white');
-                btn.classList.add('bg-gray-100', 'text-gray-900');
-            }
-        });
-
-        if (category === 'All') {
-            renderVideos(allVideos);
-            return;
-        }
-
-        const relatedTags = tagMap[category] || [category];
-        const filtered = allVideos.filter(item => {
-            const videoTags = (item.data.tags || "").toString().toLowerCase();
-            return relatedTags.some(t => videoTags.includes(t.toLowerCase()));
-        });
-        renderVideos(filtered);
-    }
-
-    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
-        .then(res => res.json())
-        .then(files => {
-            if (!Array.isArray(files)) throw new Error('Invalid response');
-            const jsonFiles = files.filter(f => f.name.endsWith('.json'));
-            const fetchPromises = jsonFiles.map(file => 
-                fetch(file.download_url)
-                    .then(r => r.json())
-                    .then(data => ({ filename: file.name, data }))
-            );
-            Promise.all(fetchPromises).then(results => {
-                allVideos = results;
-                renderVideos(allVideos);
-            });
-        });
-
-    document.getElementById('tags-bar').addEventListener('click', (e) => {
-        const btn = e.target.closest('.tag-btn');
-        if (btn) filterByTag(btn.dataset.tag);
+fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
+    .then(res=>res.json())
+    .then(files=>{
+        const jsonFiles=files.filter(f=>f.name.endsWith('.json'));
+        const fetchPromises=jsonFiles.map(file=>fetch(file.download_url).then(r=>r.json()).then(data=>({filename:file.name,data})));
+        Promise.all(fetchPromises).then(results=>{allVideos=results;renderVideos(allVideos);});
     });
 
-    document.getElementById('search-input').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const filtered = allVideos.filter(item => {
-            const title = (item.data.title || "").toLowerCase();
-            const author = (item.data.author || "").toLowerCase();
-            return title.includes(query) || author.includes(query);
-        });
-        renderVideos(filtered);
-    });
+document.getElementById('tags-bar').addEventListener('click',e=>{const btn=e.target.closest('.tag-btn');if(btn) filterByTag(btn.dataset.tag);});
+document.getElementById('search-input').addEventListener('input',e=>{const query=e.target.value.toLowerCase();const filtered=allVideos.filter(item=>{const title=(item.data.title||"").toLowerCase();const author=(item.data.author||"").toLowerCase();return title.includes(query)||author.includes(query);});renderVideos(filtered);});
 </script>
 </body>
 </html>
