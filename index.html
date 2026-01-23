@@ -1,160 +1,236 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OopToop - Home</title>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
-    margin: 0;
-    padding: 20px;
-    color: #333;
-  }
-
-  /* Card Container */
-  .video-card {
-    background: #ffffff;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Media */
-  .video-thumb {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border-radius: 6px;
-    cursor: pointer;
-    display: block;
-  }
-
-
-  /* Typography */
-  .video-title {
-    display: block;
-    margin-top: 8px;
-    margin-bottom: 5px;
-    font-weight: bold;
-    font-size: 18px;
-  }
-
-  .video-description {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 10px;
-  }
-
-  #video-feed {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
-  }
-
-  /* Links */
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
-
-/* Topbar styles */
-.topbar {
-  position: sticky;
-  top: 0;
-  background: white;
-  padding: 8px 20px;
-  border-bottom: 1px solid #ddd;
-  z-index: 1000;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none; /* remove underline */
-  color: black;
-}
-
-.logo img {
-  height: 40px; /* adjust as needed */
-  width: auto;
-  display: block;
-}
-
-.logo-text {
-  font-size: 20px;     /* adjust size */
-  font-weight: bold;
-  margin-left: 10px;   /* space between logo and text */
-}
-
-
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OopToop - Home</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #0f0f0f;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e5e5e5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d1d1d1;
+        }
+        .video-card:hover .video-thumb {
+            border-radius: 0;
+            transition: border-radius 0.2s ease;
+        }
+        /* Hide horizontal scrollbar for tags */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
-<body>
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-<link rel="manifest" href="site.webmanifest">
-<div class="topbar">
-  <a href="index.html" class="logo">
-    <img src="logo.png" alt="OopToop Logo">
-    <span class="logo-text">OopToop</span>
-  </a>
-</div>
+<body class="font-sans antialiased">
 
+    <!-- Top Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
+        <div class="flex items-center gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <a href="index.html" class="flex items-center gap-1 group">
+                <div class="flex items-center">
+                    <!-- Updated Logo URL -->
+                    <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
+                         alt="OopToop Logo" 
+                         class="h-8 w-auto mr-1"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <!-- Fallback Icon if logo fails -->
+                    <div class="hidden bg-red-600 rounded-lg p-1 group-hover:bg-red-700 transition-colors">
+                        <i data-lucide="play" class="w-5 h-5 text-white fill-current"></i>
+                    </div>
+                </div>
+                <span class="text-xl font-bold tracking-tighter">OopToop</span>
+            </a>
+        </div>
 
-<div id="video-feed"></div>
+        <div class="hidden md:flex items-center flex-1 max-w-[720px] ml-10">
+            <div class="flex flex-1 items-center bg-gray-50 border border-gray-300 rounded-l-full px-4 py-1 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
+                <i data-lucide="search" class="w-5 h-5 text-gray-400 mr-2"></i>
+                <input type="text" placeholder="Search" class="bg-transparent w-full outline-none text-base">
+            </div>
+            <button class="bg-gray-100 border border-l-0 border-gray-300 rounded-r-full px-5 py-[6px] hover:bg-gray-200">
+                <i data-lucide="search" class="w-5 h-5"></i>
+            </button>
+            <button class="ml-4 p-2 bg-gray-100 hover:bg-gray-200 rounded-full">
+                <i data-lucide="mic" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="video" class="w-6 h-6"></i></button>
+            <button class="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="bell" class="w-6 h-6"></i></button>
+            <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium ml-2">U</div>
+        </div>
+    </nav>
+
+    <div class="flex pt-14">
+        <!-- Sidebar (Desktop) -->
+        <aside class="hidden lg:flex flex-col w-64 fixed left-0 bottom-0 top-14 overflow-y-auto px-2 py-4 gap-1 border-r border-gray-50">
+            <a href="#" class="flex items-center gap-5 p-3 bg-gray-100 rounded-xl font-medium"><i data-lucide="home" class="w-5 h-5"></i> Home</a>
+            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="play-square" class="w-5 h-5"></i> Shorts</a>
+            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl border-b border-gray-100 mb-2 pb-4"><i data-lucide="layers" class="w-5 h-5"></i> Subscriptions</a>
+            
+            <span class="px-3 py-2 text-sm font-semibold">You</span>
+            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="user-square" class="w-5 h-5"></i> Your channel</a>
+            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="history" class="w-5 h-5"></i> History</a>
+            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-100 rounded-xl"><i data-lucide="clock" class="w-5 h-5"></i> Watch later</a>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 lg:ml-64 p-4 md:p-6">
+            <!-- Tags/Filters Bar -->
+            <div class="flex gap-3 mb-6 overflow-x-auto no-scrollbar pb-2">
+                <span class="bg-black text-white px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer">All</span>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors">Music</span>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors">Gaming</span>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors">Live</span>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors">Coding</span>
+                <span class="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm whitespace-nowrap cursor-pointer transition-colors">Tech</span>
+            </div>
+
+            <!-- Video Grid -->
+            <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+                <!-- Loading State placeholder -->
+                <div class="animate-pulse">
+                    <div class="bg-gray-200 aspect-video rounded-xl mb-3"></div>
+                    <div class="flex gap-3">
+                        <div class="bg-gray-200 w-10 h-10 rounded-full"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="bg-gray-200 h-4 w-3/4 rounded"></div>
+                            <div class="bg-gray-200 h-3 w-1/2 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
 <script>
-const owner = 'OopToop';
-const repo = 'videos';
-const metadataPath = 'metadata';
-const videoFeed = document.getElementById('video-feed');
+    // Initialize Lucide icons
+    lucide.createIcons();
 
-// fetch all JSON files from metadata folder using GitHub API
-fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
-    .then(res => res.json())
-    .then(files => {
-        const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+    const owner = 'OopToop';
+    const repo = 'videos';
+    const metadataPath = 'metadata';
+    const videoFeed = document.getElementById('video-feed');
 
-        const fetchPromises = jsonFiles.map(file => fetch(file.download_url).then(r => r.json()));
+    // Helper to format view numbers (e.g., 1000 -> 1K)
+    function formatViews(count) {
+        if (!count) return '0 views';
+        const num = parseInt(count);
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M views';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K views';
+        return num + ' views';
+    }
 
-        Promise.all(fetchPromises)
-            .then(allData => {
-                allData.forEach((data, i) => {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
+    // Fetch all JSON files from metadata folder using GitHub API
+    fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${metadataPath}`)
+        .then(res => res.json())
+        .then(files => {
+            if (!Array.isArray(files)) throw new Error('Invalid response from GitHub');
+            
+            // Clear loading skeleton
+            videoFeed.innerHTML = '';
 
-                    // thumbnail image
-                    const thumb = document.createElement('img');
-                    thumb.src = `https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${encodeURIComponent(data.thumbnail)}`;
-                    thumb.alt = data.title;
-                    thumb.className = 'video-thumb';
+            const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+            const fetchPromises = jsonFiles.map(file => fetch(file.download_url).then(r => r.json()));
 
-                    // title link
-                    const titleLink = document.createElement('a');
-                    titleLink.className = 'video-title';
-                    titleLink.textContent = data.title || 'Untitled';
-                    titleLink.href = `video.html?id=${encodeURIComponent(jsonFiles[i].name)}`;
+            Promise.all(fetchPromises)
+                .then(allData => {
+                    allData.forEach((data, i) => {
+                        const videoId = jsonFiles[i].name;
+                        const videoLink = `video.html?id=${encodeURIComponent(videoId)}`;
+                        
+                        // Extracting real data from metadata JSON
+                        const uploader = data.author || data.uploader || 'Anonymous';
+                        const views = formatViews(data.views || 0);
+                        const date = data.date || data.upload_date || 'Recently';
+                        
+                        const card = document.createElement('div');
+                        card.className = 'video-card group cursor-pointer flex flex-col';
+                        
+                        // Thumbnail Container
+                        const thumbContainer = document.createElement('div');
+                        thumbContainer.className = 'relative w-full aspect-video mb-3 overflow-hidden rounded-xl bg-gray-100';
 
-                    // make thumbnail clickable too
-                    thumb.addEventListener('click', () => {
-                        window.location.href = titleLink.href;
+                        const thumb = document.createElement('img');
+                        thumb.src = `https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${encodeURIComponent(data.thumbnail)}`;
+                        thumb.alt = data.title;
+                        thumb.className = 'video-thumb w-full h-full object-cover group-hover:scale-105 transition-transform duration-200';
+                        thumb.onerror = () => { thumb.src = 'https://via.placeholder.com/640x360/f3f4f6/9ca3af?text=OopToop'; };
+
+                        thumbContainer.appendChild(thumb);
+
+                        // Content Details
+                        const details = document.createElement('div');
+                        details.className = 'flex gap-3';
+
+                        // Channel Icon (First letter of uploader)
+                        const channelIcon = document.createElement('div');
+                        channelIcon.className = 'flex-shrink-0 w-9 h-9 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center text-xs font-bold uppercase';
+                        channelIcon.textContent = uploader.charAt(0);
+
+                        const textContainer = document.createElement('div');
+                        textContainer.className = 'flex flex-col overflow-hidden';
+
+                        const title = document.createElement('h3');
+                        title.className = 'font-semibold text-base leading-tight mb-1 line-clamp-2 text-gray-900';
+                        title.textContent = data.title || 'Untitled Video';
+
+                        const meta = document.createElement('div');
+                        meta.className = 'text-sm text-gray-600';
+                        meta.innerHTML = `
+                            <p class="hover:text-black transition-colors truncate">${uploader}</p>
+                            <p>${views} • ${date}</p>
+                        `;
+
+                        textContainer.appendChild(title);
+                        textContainer.appendChild(meta);
+                        details.appendChild(channelIcon);
+                        details.appendChild(textContainer);
+
+                        card.appendChild(thumbContainer);
+                        card.appendChild(details);
+
+                        // Click event
+                        card.addEventListener('click', () => {
+                            window.location.href = videoLink;
+                        });
+
+                        videoFeed.appendChild(card);
                     });
-
-                    card.appendChild(thumb);
-                    card.appendChild(titleLink);
-
-                    videoFeed.appendChild(card);
+                })
+                .catch(err => {
+                    videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">Error loading metadata contents.</p>`;
+                    console.error('Error loading metadata:', err);
                 });
-            })
-            .catch(err => console.error('Error loading metadata JSONs:', err));
-    })
-    .catch(err => console.error('Error fetching metadata folder:', err));
+        })
+        .catch(err => {
+            videoFeed.innerHTML = `<p class="col-span-full text-center text-gray-500 py-10">GitHub Repository connection failed.</p>`;
+            console.error('Error fetching metadata folder:', err);
+        });
 </script>
 </body>
 </html>
