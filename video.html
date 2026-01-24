@@ -34,7 +34,8 @@
 </head>
 <body class="font-sans antialiased">
 
-    <!-- Top Navigation Bar (Exact copy from Home) -->
+    <!-- NAV -->
+ <!-- Top Navigation Bar -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
             <button class="p-2 hover:bg-gray-100 rounded-full">
@@ -54,15 +55,15 @@
             </a>
         </div>
 
-        <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1 flex-1 max-w-[720px] mx-10">
+  <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
 
-        <div id="auth-section" class="flex gap-2 items-center">
-            <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium cursor-pointer"></div>
-            <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded text-sm font-medium">Sign out</button>
-            <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded text-sm font-medium">Sign in</button>
-            <button id="register-btn" class="border px-3 py-1 text-green-600 rounded text-sm font-medium">Register</button>
-        </div>
-    </nav>
+  <div id="auth-section" class="flex gap-2">
+    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
+    <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
+    <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded">Sign in</button>
+    <button id="register-btn" class="border px-3 py-1 text-green-600 rounded">Register</button>
+  </div>
+</nav>
 
     <!-- Main Player Layout -->
     <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto pb-10">
