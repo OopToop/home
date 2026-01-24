@@ -116,6 +116,13 @@ ui.signout.onclick = () => { user.leave(); updateAuth(); };
 const feed = document.getElementById('video-feed');
 let allVideos = [];
 
+// Tag grouping for smarter filtering
+const tagGroups = {
+  "Music": ["music", "song", "audio", "musical"],
+  "Gaming": ["gaming", "games", "gameplay", "play"],
+  "Tech": ["tech", "technology", "hardware", "coding", "programming"]
+};
+
 fetch('https://api.github.com/repos/OopToop/videos/contents/metadata')
   .then(r=>r.json())
   .then(files=>Promise.all(
@@ -141,9 +148,37 @@ function render(list){
   });
 }
 
+// Search input logic
 document.getElementById('search-input').oninput=e=>{
   const q=e.target.value.toLowerCase();
   render(allVideos.filter(v=>v.data.title?.toLowerCase().includes(q)));
+};
+
+// Genre button logic
+document.getElementById('tags-bar').onclick = e => {
+  const btn = e.target.closest('.tag-btn');
+  if (!btn) return;
+
+  const category = btn.dataset.tag;
+
+  // Update visual state of buttons
+  document.querySelectorAll('.tag-btn').forEach(b => {
+    b.classList.remove('bg-black', 'text-white');
+    b.classList.add('bg-gray-100', 'text-black');
+  });
+  btn.classList.add('bg-black', 'text-white');
+  btn.classList.remove('bg-gray-100', 'text-black');
+
+  if (category === 'All') {
+    render(allVideos);
+  } else {
+    const keywords = tagGroups[category] || [category.toLowerCase()];
+    const filtered = allVideos.filter(v => {
+      const vTags = (v.data.tags || "").toLowerCase();
+      return keywords.some(k => vTags.includes(k));
+    });
+    render(filtered);
+  }
 };
 </script>
 
