@@ -174,7 +174,8 @@ document.getElementById('tags-bar').onclick = e => {
   } else {
     const keywords = tagGroups[category] || [category.toLowerCase()];
     const filtered = allVideos.filter(v => {
-      const vTags = (v.data.tags || "").toLowerCase();
+      // Improved tag checking: check 'tags' string or even 'category' if it exists in data
+      const vTags = ((v.data.tags || "") + " " + (v.data.category || "")).toLowerCase();
       return keywords.some(k => vTags.includes(k));
     });
     render(filtered);
