@@ -60,6 +60,8 @@ body { background:#fff; color:#0f0f0f; }
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Music">Music</button>
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Gaming">Gaming</button>
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Tech">Tech</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="reallife">Real Life</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Animation">Animation</button>
   </div>
 
   <!-- VIDEO GRID -->
@@ -119,8 +121,11 @@ let allVideos = [];
 // Tag grouping for smarter filtering
 const tagGroups = {
   "Music": ["music", "song", "audio", "musical"],
-  "Gaming": ["gaming", "games", "gameplay", "play"],
-  "Tech": ["tech", "technology", "hardware", "coding", "programming"]
+  "Gaming": ["gaming", "games", "gameplay", "play", "minecraft", "roblox", "mario 64", "mario"],
+  "Tech": ["tech", "technology", "hardware", "coding", "programming"],
+  "Real Life": ["reallife", "rl", "real life", "life"],
+  "Animation": ["animated", "animation", "animations"]
+ 
 };
 
 fetch('https://api.github.com/repos/OopToop/videos/contents/metadata')
