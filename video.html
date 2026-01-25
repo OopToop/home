@@ -93,8 +93,8 @@ video {
 <script>
 lucide.createIcons();
 
-// --- AUTH (same as before) ---
-const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+/* ================= AUTH ================= */
+const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'] });
 const user = gun.user().recall({ sessionStorage: true });
 
 const ui = {
@@ -126,13 +126,13 @@ ui.signin.onclick = () => {
     user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
 };
 ui.register.onclick = () => {
-    const u = prompt('Choose a username:');
-    const p = prompt('Choose a password:');
-    user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created!'));
+    const u = prompt('Username');
+    const p = prompt('Password');
+    user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created'));
 };
 ui.signout.onclick = () => { user.leave(); updateAuth(); };
 
-// --- VIDEO + GLOBAL VIEWS ---
+/* ================= VIDEO + GLOBAL VIEWS ================= */
 const owner = 'OopToop';
 const repo = 'videos';
 const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
@@ -147,43 +147,45 @@ if (videoFile) {
     fetch(metadataBase + videoFile)
         .then(r => r.json())
         .then(data => {
+            // Video title, description, date
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
 
+            // Video player
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
+            // GLOBAL VIEWS LOGIC
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
-            // **INSERT A NEW VIEW AS A UNIQUE ENTRY**
-            videoNode.get('views')
-                     .get(Gun.text.random())
-                     .put(1);
+            // Add a view on every load
+            videoNode.get('views').set({
+                t: Date.now(),
+                r: Math.random()
+            });
 
-            // **SUM ALL VIEW ENTRIES**
-            function computeViews(snapshot = {}) {
-                let total = 0;
-                // Gun gives us an object where each key has value 1
-                Object.values(snapshot).forEach(val => {
-                    total += parseInt(val) || 0;
+            // Count all views and update
+            let count = 0;
+            videoNode.get('views').map().on(v => {
+                count = 0;
+                videoNode.get('views').map().once(() => {
+                    count++;
+                    viewsEl.textContent = count.toLocaleString();
                 });
-                viewsEl.textContent = total.toLocaleString();
-            }
+            });
 
-            // Subscribe to changes on views
-            videoNode.get('views').once(computeViews);
-            videoNode.get('views').on(computeViews);
-
-            // Local star ratings (unchanged)
+            // ===== LOCAL STAR RATINGS =====
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
+
             function updateStars(val) {
                 stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
             }
             updateStars(saved);
+
             stars.forEach(s => {
                 s.onclick = () => {
                     localStorage.setItem(ratingKey, s.dataset.value);
@@ -192,10 +194,19 @@ if (videoFile) {
             });
         })
         .catch(err => {
+            console.error("Error loading video metadata:", err);
             document.getElementById('video-title').textContent = "Error loading video";
         });
 }
+
+// ================= SEARCH REDIRECT =================
+document.getElementById('search-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+    }
+});
 </script>
+
 
 
 
