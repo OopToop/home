@@ -16,25 +16,11 @@
 <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
 
 <style>
-body {
-    background-color: #ffffff;
-    color: #0f0f0f;
-}
-.star {
-    cursor: pointer;
-    transition: transform 0.1s ease;
-}
-.star:hover {
-    transform: scale(1.1);
-}
-.star.selected svg {
-    fill: #fbbf24;
-    color: #fbbf24;
-}
-video {
-    background-color: black;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-}
+body { background-color: #ffffff; color: #0f0f0f; }
+.star { cursor: pointer; transition: transform 0.1s ease; }
+.star:hover { transform: scale(1.1); }
+.star.selected svg { fill: #fbbf24; color: #fbbf24; }
+video { background-color: black; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
 </style>
 </head>
 
@@ -48,9 +34,7 @@ video {
             <span class="text-xl font-bold tracking-tighter">OopToop</span>
         </a>
     </div>
-
     <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
-
     <div class="flex gap-2">
         <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
         <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
@@ -94,7 +78,7 @@ video {
 lucide.createIcons();
 
 /* ================= AUTH ================= */
-const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'] });
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const user = gun.user().recall({ sessionStorage: true });
 
 const ui = {
@@ -139,51 +123,42 @@ const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/video
 const metadataBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/metadata/`;
 
 const videosDB = gun.get('videos');
+
 const params = new URLSearchParams(window.location.search);
 const videoFile = params.get('id');
 
-if (!videoFile) {
-    document.getElementById('video-title').textContent = "No video selected";
-} else {
-    const player = document.getElementById('video-player');
-    const viewsEl = document.getElementById('video-views');
-
-    // 1️⃣ Load metadata from GitHub
+if (videoFile) {
     fetch(metadataBase + videoFile)
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
+
+            const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
-            // 2️⃣ Global views logic
             const videoNode = videosDB.get(videoFile);
+            const viewsEl = document.getElementById('video-views');
 
-            // Add a view entry every load
-            videoNode.get('views').set({
-                t: Date.now(),
-                r: Math.random() // unique random key
-            });
+            // --- RECORD THIS VIEW ---
+            videoNode.get('views').set({ t: Date.now(), r: Math.random() });
 
-            // Count all views across devices
-            let totalViews = 0;
-            videoNode.get('views').map().once(v => {
-                videoNode.get('views').map().once(() => {
-                    let count = 0;
-                    videoNode.get('views').map().once(() => count++);
-                    viewsEl.textContent = count.toLocaleString();
-                });
-            });
+            // --- LIVE GLOBAL VIEW COUNT ---
+            const updateViews = () => {
+                let count = 0;
+                videoNode.get('views').map().once(() => count++);
+                viewsEl.textContent = count.toLocaleString();
+            };
+            videoNode.get('views').map().on(updateViews);
+            updateViews(); // initial count
 
-            // 3️⃣ Local star ratings
+            // --- STAR RATINGS (LOCAL ONLY) ---
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
 
-            function updateStars(val) {
-                stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
-            }
+            const updateStars = val => stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
             updateStars(saved);
 
             stars.forEach(s => {
@@ -193,13 +168,10 @@ if (!videoFile) {
                 };
             });
         })
-        .catch(err => {
-            console.error("Error loading video metadata:", err);
-            document.getElementById('video-title').textContent = "Error loading video";
-        });
+        .catch(err => console.error('Error loading metadata:', err));
 }
 
-// ================= SEARCH REDIRECT =================
+// --- SEARCH REDIRECT ---
 document.getElementById('search-input').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
@@ -207,8 +179,5 @@ document.getElementById('search-input').addEventListener('keypress', (e) => {
 });
 </script>
 
-
-
 </body>
 </html>
-
