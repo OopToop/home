@@ -93,7 +93,7 @@ video {
 <script>
 lucide.createIcons();
 
-/* ================= AUTH ================= */
+// --- AUTH (same as before) ---
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const user = gun.user().recall({ sessionStorage: true });
 
@@ -126,13 +126,13 @@ ui.signin.onclick = () => {
     user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
 };
 ui.register.onclick = () => {
-    const u = prompt('Username');
-    const p = prompt('Password');
-    user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created'));
+    const u = prompt('Choose a username:');
+    const p = prompt('Choose a password:');
+    user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created!'));
 };
 ui.signout.onclick = () => { user.leave(); updateAuth(); };
 
-/* ================= VIDEO + GLOBAL VIEWS ================= */
+// --- VIDEO + GLOBAL VIEWS ---
 const owner = 'OopToop';
 const repo = 'videos';
 const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
@@ -147,7 +147,6 @@ if (videoFile) {
     fetch(metadataBase + videoFile)
         .then(r => r.json())
         .then(data => {
-            // Video info
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
@@ -155,32 +154,36 @@ if (videoFile) {
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
-            // GLOBAL VIEW COUNTER
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
-            // Subscribe to live updates
-            videoNode.get('views').on(v => {
-            viewsEl.textContent = (v || 0).toLocaleString();
-            });
+            // **INSERT A NEW VIEW AS A UNIQUE ENTRY**
+            videoNode.get('views')
+                     .get(Gun.text.random())
+                     .put(1);
 
-            // Increment view count
-            videoNode.get('views').once(current => {
-                const newVal = (parseInt(current) || 0) + 1;
-                videoNode.get('views').put(newVal);
-            });
+            // **SUM ALL VIEW ENTRIES**
+            function computeViews(snapshot = {}) {
+                let total = 0;
+                // Gun gives us an object where each key has value 1
+                Object.values(snapshot).forEach(val => {
+                    total += parseInt(val) || 0;
+                });
+                viewsEl.textContent = total.toLocaleString();
+            }
 
+            // Subscribe to changes on views
+            videoNode.get('views').once(computeViews);
+            videoNode.get('views').on(computeViews);
 
-            // STARS (local only)
+            // Local star ratings (unchanged)
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
-
             function updateStars(val) {
                 stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
             }
             updateStars(saved);
-
             stars.forEach(s => {
                 s.onclick = () => {
                     localStorage.setItem(ratingKey, s.dataset.value);
@@ -193,6 +196,7 @@ if (videoFile) {
         });
 }
 </script>
+
 
 
 </body>
