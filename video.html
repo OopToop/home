@@ -156,13 +156,36 @@ if (videoFile) {
 
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
-            const viewedKey = `viewed-${videoFile}`;
 
             // Subscribe to live updates
             videoNode.get('views').on(v => {
                 viewsEl.textContent = (v || 0).toLocaleString();
             });
-    }
+
+            // Increment global view count on every load
+            videoNode.get('views').once(current => {
+                videoNode.get('views').put((current || 0) + 1);
+            });
+
+            // stars (still local)
+            const stars = document.querySelectorAll('.star');
+            const ratingKey = `rating-${videoFile}`;
+            const saved = localStorage.getItem(ratingKey) || 0;
+
+            function updateStars(val){
+                stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
+            }
+            updateStars(saved);
+
+            stars.forEach(s => {
+                s.onclick = () => {
+                    localStorage.setItem(ratingKey, s.dataset.value);
+                    updateStars(s.dataset.value);
+                };
+            });
+        });
+}
+
 
 
             // stars (still local)
