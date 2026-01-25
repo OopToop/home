@@ -156,20 +156,14 @@ if (videoFile) {
 
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
-
-            // increment ONCE per device
             const viewedKey = `viewed-${videoFile}`;
-            if (!localStorage.getItem(viewedKey)) {
-                videoNode.get('views').once(v => {
-                    videoNode.get('views').put((v || 0) + 1);
-                    localStorage.setItem(viewedKey, 'true');
-                });
-            }
 
-            // live global views
+            // Subscribe to live updates
             videoNode.get('views').on(v => {
                 viewsEl.textContent = (v || 0).toLocaleString();
             });
+    }
+
 
             // stars (still local)
             const stars = document.querySelectorAll('.star');
