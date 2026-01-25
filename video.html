@@ -17,20 +17,20 @@
 
 <!-- Firebase -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-  import { getDatabase, ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getDatabase, ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
 
-  window.firebaseApp = initializeApp({
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  });
+window.firebaseApp = initializeApp({
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+});
 
-  window.firebaseDB = getDatabase(firebaseApp);
+window.firebaseDB = getDatabase(firebaseApp);
 </script>
 
 <style>
@@ -91,7 +91,7 @@ video { background-color: black; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
 </main>
 
 <script type="module">
-import { getDatabase, ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+import { ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
 
 lucide.createIcons();
 
@@ -150,23 +150,23 @@ if (videoFile) {
       document.getElementById('video-title').textContent = data.title;
       document.getElementById('video-description').textContent = data.description || '';
       document.getElementById('video-date').textContent = data.date || 'Unknown';
-
+      document.getElementById('video-uploader').textContent = `Uploaded by: ${data.uploader || 'Unknown'}`;
       document.getElementById('video-player').src = videoBase + encodeURIComponent(data.filename);
 
-      // Firebase ref for this video's views
+      // ----- FIREBASE VIEWS -----
       const db = window.firebaseDB;
       const viewsRef = ref(db, `videos/${videoFile}/views`);
-
-      // Atomic increment
+      
+      // Increment atomically
       runTransaction(viewsRef, current => (current || 0) + 1);
-
-      // Live updates
+      
+      // Subscribe to live updates
       const viewsEl = document.getElementById('video-views');
       onValue(viewsRef, snapshot => {
         viewsEl.textContent = (snapshot.val() || 0).toLocaleString();
       });
 
-      // --- STAR RATINGS (local only) ---
+      // ----- STAR RATINGS (LOCAL ONLY) -----
       const stars = document.querySelectorAll('.star');
       const ratingKey = `rating-${videoFile}`;
       const saved = localStorage.getItem(ratingKey) || 0;
