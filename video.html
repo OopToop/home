@@ -156,15 +156,19 @@ if (videoFile) {
       // ----- FIREBASE VIEWS -----
       const db = window.firebaseDB;
       const viewsRef = ref(db, `videos/${videoFile}/views`);
-      
-      // Increment atomically
-      runTransaction(viewsRef, current => (current || 0) + 1);
-      
-      // Subscribe to live updates
       const viewsEl = document.getElementById('video-views');
+
+      // Subscribe to live updates first
       onValue(viewsRef, snapshot => {
         viewsEl.textContent = (snapshot.val() || 0).toLocaleString();
       });
+
+      // Increment the view count after player is ready
+      const player = document.getElementById('video-player');
+      player.addEventListener('loadedmetadata', () => {
+        runTransaction(viewsRef, current => (current || 0) + 1);
+      });
+
 
       // ----- STAR RATINGS (LOCAL ONLY) -----
       const stars = document.querySelectorAll('.star');
