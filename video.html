@@ -154,20 +154,23 @@ if (videoFile) {
       document.getElementById('video-player').src = videoBase + encodeURIComponent(data.filename);
 
       // ----- FIREBASE VIEWS -----
+      import { getDatabase, ref, runTransaction, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
       const db = window.firebaseDB;
       const viewsRef = ref(db, `videos/${videoFile}/views`);
       const viewsEl = document.getElementById('video-views');
 
-      // Subscribe to live updates first
-      onValue(viewsRef, snapshot => {
-        viewsEl.textContent = (snapshot.val() || 0).toLocaleString();
+      // Ensure views start at 0 if undefined
+      runTransaction(viewsRef, current => {
+          if (current === null || isNaN(current)) return 1; // first view
+          return current + 1; // increment
       });
 
-      // Increment the view count after player is ready
-      const player = document.getElementById('video-player');
-      player.addEventListener('loadedmetadata', () => {
-        runTransaction(viewsRef, current => (current || 0) + 1);
+      // Live updates
+      onValue(viewsRef, snapshot => {
+          viewsEl.textContent = (snapshot.val() || 0).toLocaleString();
       });
+
 
 
       // ----- STAR RATINGS (LOCAL ONLY) -----
