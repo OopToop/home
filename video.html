@@ -159,22 +159,17 @@ if (videoFile) {
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
-            // Add a new unique view
-            const viewId = Gun.text.random();
-            videoNode.get('views').get(viewId).put(1);
+            // Subscribe to live updates
+            videoNode.get('views').on(v => {
+            viewsEl.textContent = (v || 0).toLocaleString();
+            });
 
-            // Function to sum all views
-            function updateTotalViews() {
-                let total = 0;
-                videoNode.get('views').map().once(v => {
-                    total += parseInt(v) || 0;
-                    viewsEl.textContent = total.toLocaleString();
-                });
-            }
+            // Increment view count
+            videoNode.get('views').once(current => {
+                const newVal = (parseInt(current) || 0) + 1;
+                videoNode.get('views').put(newVal);
+            });
 
-            // Run once now and subscribe for live updates
-            updateTotalViews();
-            videoNode.get('views').map().on(() => updateTotalViews());
 
             // STARS (local only)
             const stars = document.querySelectorAll('.star');
