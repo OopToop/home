@@ -145,15 +145,18 @@ const videoFile = params.get('id');
 
 if (videoFile) {
     fetch(metadataBase + videoFile)
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
+            // Load video info
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
 
+            // Load video file
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
+            // Gun.js global views
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
@@ -167,7 +170,7 @@ if (videoFile) {
                 videoNode.get('views').put((current || 0) + 1);
             });
 
-            // stars (still local)
+            // Local star ratings
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
@@ -183,30 +186,13 @@ if (videoFile) {
                     updateStars(s.dataset.value);
                 };
             });
-        });
-}
-
-
-
-            // stars (still local)
-            const stars = document.querySelectorAll('.star');
-            const ratingKey = `rating-${videoFile}`;
-            const saved = localStorage.getItem(ratingKey) || 0;
-
-            function updateStars(val){
-                stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
-            }
-            updateStars(saved);
-
-            stars.forEach(s => {
-                s.onclick = () => {
-                    localStorage.setItem(ratingKey, s.dataset.value);
-                    updateStars(s.dataset.value);
-                };
-            });
+        })
+        .catch(err => {
+            document.getElementById('video-title').textContent = "Error loading video";
         });
 }
 </script>
+
 
 </body>
 </html>
