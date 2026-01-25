@@ -160,15 +160,19 @@ if (videoFile) {
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
-            // Subscribe to live updates
-            videoNode.get('views').on(v => {
-                viewsEl.textContent = (v || 0).toLocaleString();
+            // Increment view count safely
+            videoNode.get('views').get(Gun.text.random()).put(1); // Push a new "1" node for this view
+
+            // Subscribe to live updates and sum all child nodes for total views
+            videoNode.get('views').map().once(val => {
+                let total = 0;
+                videoNode.get('views').map().once(v => {
+                    total += parseInt(v) || 0;
+                    viewsEl.textContent = total.toLocaleString();
+                });
             });
 
-            // Increment global view count on every load
-            videoNode.get('views').once(current => {
-                videoNode.get('views').put((current || 0) + 1);
-            });
+
 
             // Local star ratings
             const stars = document.querySelectorAll('.star');
