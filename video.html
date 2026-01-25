@@ -89,23 +89,124 @@ video {
 
 </div>
 </main>
-const videoNode = videosDB.get(videoFile);
-const viewsEl = document.getElementById('video-views');
 
-// 1️⃣ Add a new view entry every time this page loads
-videoNode.get('views').set({
-    t: Date.now(),
-    random: Math.random() // ensures uniqueness
-});
+<script>
+lucide.createIcons();
 
-// 2️⃣ Subscribe to all views and count them
-videoNode.get('views').map().once(() => {
-    videoNode.get('views').map().once(() => {
-        let count = 0;
-        videoNode.get('views').map().once(() => count++);
-        viewsEl.textContent = count.toLocaleString();
-    });
+/* ================= AUTH ================= */
+const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'] });
+const user = gun.user().recall({ sessionStorage: true });
+
+const ui = {
+    profile: document.getElementById('user-profile'),
+    signin: document.getElementById('signin-btn'),
+    register: document.getElementById('register-btn'),
+    signout: document.getElementById('signout-btn')
+};
+
+function updateAuth() {
+    if (user.is) {
+        ui.profile.classList.remove('hidden');
+        ui.signout.classList.remove('hidden');
+        ui.signin.classList.add('hidden');
+        ui.register.classList.add('hidden');
+        user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
+    } else {
+        ui.profile.classList.add('hidden');
+        ui.signout.classList.add('hidden');
+        ui.signin.classList.remove('hidden');
+        ui.register.classList.remove('hidden');
+    }
+}
+updateAuth();
+
+ui.signin.onclick = () => {
+    const u = prompt('Username');
+    const p = prompt('Password');
+    user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
+};
+ui.register.onclick = () => {
+    const u = prompt('Username');
+    const p = prompt('Password');
+    user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created'));
+};
+ui.signout.onclick = () => { user.leave(); updateAuth(); };
+
+/* ================= VIDEO + GLOBAL VIEWS ================= */
+const owner = 'OopToop';
+const repo = 'videos';
+const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
+const metadataBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/metadata/`;
+
+const videosDB = gun.get('videos');
+const params = new URLSearchParams(window.location.search);
+const videoFile = params.get('id');
+
+if (!videoFile) {
+    document.getElementById('video-title').textContent = "No video selected";
+} else {
+    const player = document.getElementById('video-player');
+    const viewsEl = document.getElementById('video-views');
+
+    // 1️⃣ Load metadata from GitHub
+    fetch(metadataBase + videoFile)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('video-title').textContent = data.title;
+            document.getElementById('video-description').textContent = data.description || '';
+            document.getElementById('video-date').textContent = data.date || 'Unknown';
+            player.src = videoBase + encodeURIComponent(data.filename);
+
+            // 2️⃣ Global views logic
+            const videoNode = videosDB.get(videoFile);
+
+            // Add a view entry every load
+            videoNode.get('views').set({
+                t: Date.now(),
+                r: Math.random() // unique random key
+            });
+
+            // Count all views across devices
+            let totalViews = 0;
+            videoNode.get('views').map().once(v => {
+                videoNode.get('views').map().once(() => {
+                    let count = 0;
+                    videoNode.get('views').map().once(() => count++);
+                    viewsEl.textContent = count.toLocaleString();
+                });
+            });
+
+            // 3️⃣ Local star ratings
+            const stars = document.querySelectorAll('.star');
+            const ratingKey = `rating-${videoFile}`;
+            const saved = localStorage.getItem(ratingKey) || 0;
+
+            function updateStars(val) {
+                stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
+            }
+            updateStars(saved);
+
+            stars.forEach(s => {
+                s.onclick = () => {
+                    localStorage.setItem(ratingKey, s.dataset.value);
+                    updateStars(s.dataset.value);
+                };
+            });
+        })
+        .catch(err => {
+            console.error("Error loading video metadata:", err);
+            document.getElementById('video-title').textContent = "Error loading video";
+        });
+}
+
+// ================= SEARCH REDIRECT =================
+document.getElementById('search-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+    }
 });
+</script>
+
 
 
 </body>
