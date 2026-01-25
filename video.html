@@ -139,44 +139,44 @@ const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/video
 const metadataBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/metadata/`;
 
 const videosDB = gun.get('videos');
-
 const params = new URLSearchParams(window.location.search);
 const videoFile = params.get('id');
 
-if (videoFile) {
+if (!videoFile) {
+    document.getElementById('video-title').textContent = "No video selected";
+} else {
+    const player = document.getElementById('video-player');
+    const viewsEl = document.getElementById('video-views');
+
+    // 1️⃣ Load metadata from GitHub
     fetch(metadataBase + videoFile)
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
-            // Video title, description, date
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
-
-            // Video player
-            const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
-            // GLOBAL VIEWS LOGIC
+            // 2️⃣ Global views logic
             const videoNode = videosDB.get(videoFile);
-            const viewsEl = document.getElementById('video-views');
 
-            // Add a view on every load
+            // Add a view entry every load
             videoNode.get('views').set({
                 t: Date.now(),
-                r: Math.random()
+                r: Math.random() // unique random key
             });
 
-            // Count all views and update
-            let count = 0;
-            videoNode.get('views').map().on(v => {
-                count = 0;
+            // Count all views across devices
+            let totalViews = 0;
+            videoNode.get('views').map().once(v => {
                 videoNode.get('views').map().once(() => {
-                    count++;
+                    let count = 0;
+                    videoNode.get('views').map().once(() => count++);
                     viewsEl.textContent = count.toLocaleString();
                 });
             });
 
-            // ===== LOCAL STAR RATINGS =====
+            // 3️⃣ Local star ratings
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
@@ -206,10 +206,6 @@ document.getElementById('search-input').addEventListener('keypress', (e) => {
     }
 });
 </script>
-
-
-
-
 
 </body>
 </html>
