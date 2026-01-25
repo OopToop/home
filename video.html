@@ -145,41 +145,43 @@ const videoFile = params.get('id');
 
 if (videoFile) {
     fetch(metadataBase + videoFile)
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
-            // Load video info
+            // Video info
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || '';
             document.getElementById('video-date').textContent = data.date || 'Unknown';
 
-            // Load video file
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
-            // Gun.js global views
+            // GLOBAL VIEW COUNTER
             const videoNode = videosDB.get(videoFile);
             const viewsEl = document.getElementById('video-views');
 
-            // Increment view count safely
-            videoNode.get('views').get(Gun.text.random()).put(1); // Push a new "1" node for this view
+            // Add a new unique view
+            const viewId = Gun.text.random();
+            videoNode.get('views').get(viewId).put(1);
 
-            // Subscribe to live updates and sum all child nodes for total views
-            videoNode.get('views').map().once(val => {
+            // Function to sum all views
+            function updateTotalViews() {
                 let total = 0;
                 videoNode.get('views').map().once(v => {
                     total += parseInt(v) || 0;
                     viewsEl.textContent = total.toLocaleString();
                 });
-            });
+            }
 
+            // Run once now and subscribe for live updates
+            updateTotalViews();
+            videoNode.get('views').map().on(() => updateTotalViews());
 
-
-            // Local star ratings
+            // STARS (local only)
             const stars = document.querySelectorAll('.star');
             const ratingKey = `rating-${videoFile}`;
             const saved = localStorage.getItem(ratingKey) || 0;
 
-            function updateStars(val){
+            function updateStars(val) {
                 stars.forEach(s => s.classList.toggle('selected', s.dataset.value <= val));
             }
             updateStars(saved);
