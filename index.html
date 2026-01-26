@@ -60,10 +60,9 @@ body { background:#fff; color:#0f0f0f; }
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Music">Music</button>
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Gaming">Gaming</button>
     <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Tech">Tech</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="reallife">Real Life</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Animation">Animation</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Real Life">Real Life</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Animation">Animation</button>
   </div>
-
 
   <!-- VIDEO GRID -->
   <div id="video-feed" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
@@ -76,45 +75,70 @@ lucide.createIcons();
 /* ---------- VIDEOS ---------- */
 const feed = document.getElementById('video-feed');
 let allVideos = [];
+let leaderboardData = {};
 
 const tagGroups = {
   "Music": ["music", "song", "audio", "musical", "singer", "concert"],
   "Gaming": ["gaming", "games", "gameplay", "play", "walkthrough", "speedrun"],
-  "Tech": ["tech", "technology", "hardware", "coding", "programming", "review", "unboxing"]
-  "Real Life": ["reallife", "rl", "real life", "life"],
-  "Animation": ["animated", "animation", "animations"]
+  "Tech": ["tech", "technology", "hardware", "coding", "programming", "review", "unboxing"],
+  "Real Life": ["reallife", "life", "live"],
+  "Animation": ["animation", "animated"]
 };
 
-fetch('https://api.github.com/repos/OopToop/videos/contents/metadata')
-  .then(r=>r.json())
-  .then(files=>Promise.all(
-    files.filter(f=>f.name.endsWith('.json'))
-         .map(f=>fetch(f.download_url).then(r=>r.json()).then(d=>({file:f.name,data:d})))
+// Initial data fetch: Leaderboard and then Metadata
+fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
+  .then(r => r.json())
+  .then(data => {
+    leaderboardData = data;
+    return fetch('https://api.github.com/repos/OopToop/videos/contents/metadata');
+  })
+  .then(r => r.json())
+  .then(files => Promise.all(
+    files.filter(f => f.name.endsWith('.json'))
+         .map(f => fetch(f.download_url).then(r => r.json()).then(d => ({file: f.name, data: d})))
   ))
-  .then(videos=>{
+  .then(videos => {
     allVideos = videos;
     render(videos);
-  });
+  })
+  .catch(err => console.error("Error loading OopToop data:", err));
 
 function render(list){
-  feed.innerHTML='';
-  list.forEach(v=>{
-    const c=document.createElement('div');
-    c.className='video-card cursor-pointer group';
-    c.innerHTML=`
-      <img class="video-thumb rounded-xl mb-2 w-full aspect-video object-cover" src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
-      <h3 class="font-semibold line-clamp-2">${v.data.title}</h3>
-      <p class="text-sm text-gray-600 mt-1">${v.data.author || v.data.uploader || 'OopToop Creator'}</p>
+  feed.innerHTML = '';
+  list.forEach(v => {
+    const author = v.data.author || v.data.uploader || 'OopToop Creator';
+    // Get views from metadata, fallback to 0 if not present
+    const views = v.data.views !== undefined ? parseInt(v.data.views).toLocaleString() : "0";
+    const pfpUrl = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/${encodeURIComponent(author)}.jpg`;
+
+    const c = document.createElement('div');
+    c.className = 'video-card cursor-pointer group';
+    
+    // Create UI with dynamic PFP check and view count instead of sub count
+    c.innerHTML = `
+      <img class="video-thumb rounded-xl mb-3 w-full aspect-video object-cover bg-gray-100" 
+           src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
+      <div class="flex gap-3">
+        <div class="w-9 h-9 shrink-0 relative">
+          <img src="${pfpUrl}" class="w-9 h-9 rounded-full object-cover hidden" onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden')">
+          <div class="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white text-xs font-bold uppercase">${author.charAt(0)}</div>
+        </div>
+        <div class="flex flex-col">
+          <h3 class="font-semibold line-clamp-2 leading-snug">${v.data.title}</h3>
+          <p class="text-sm text-gray-600 mt-1">${author}</p>
+          <p class="text-xs text-gray-500">${views} views</p>
+        </div>
+      </div>
     `;
-    c.onclick=()=>location.href=`video.html?id=${encodeURIComponent(v.file)}`;
+    c.onclick = () => location.href = `video.html?id=${encodeURIComponent(v.file)}`;
     feed.appendChild(c);
   });
 }
 
 // Search input logic
-document.getElementById('search-input').oninput=e=>{
-  const q=e.target.value.toLowerCase();
-  render(allVideos.filter(v=>v.data.title?.toLowerCase().includes(q)));
+document.getElementById('search-input').oninput = e => {
+  const q = e.target.value.toLowerCase();
+  render(allVideos.filter(v => v.data.title?.toLowerCase().includes(q)));
 };
 
 // Genre button logic
