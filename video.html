@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Gun.js for Decentralized Auth/Database -->
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
     <style>
         body {
             background-color: #ffffff;
             color: #0f0f0f;
+        }
         .star {
             cursor: pointer;
             transition: transform 0.1s ease;
@@ -36,9 +33,12 @@
 <body class="font-sans antialiased">
 
     <!-- NAV -->
- <!-- Top Navigation Bar -->
+    <!-- Top Navigation Bar (Updated to match Home) -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='index.html'">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
             <a href="index.html" class="flex items-center gap-1 group">
                 <div class="flex items-center">
                     <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
@@ -53,15 +53,18 @@
             </a>
         </div>
 
-  <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
+        <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
 
-  <div id="auth-section" class="flex gap-2">
-    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
-    <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
-    <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded">Sign in</button>
-    <button id="register-btn" class="border px-3 py-1 text-green-600 rounded">Register</button>
-  </div>
-</nav>
+        <div id="action-section" class="flex gap-3 items-center">
+            <!-- Upload Button -->
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" 
+               target="_blank" 
+               class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
+                <i data-lucide="video" class="w-5 h-5"></i>
+                <span class="hidden sm:inline">Upload</span>
+            </a>
+        </div>
+    </nav>
 
     <!-- Main Player Layout -->
     <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto pb-10">
@@ -79,10 +82,14 @@
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-4">
                         <!-- Author Info -->
                         <div class="flex items-center gap-3">
-                            <div id="channel-icon" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold uppercase">O</div>
+                            <!-- Dynamic Channel Profile Picture -->
+                            <div class="relative w-10 h-10 shrink-0">
+                                <img id="channel-pfp" src="" alt="" class="w-10 h-10 rounded-full bg-gray-200 object-cover hidden">
+                                <div id="pfp-fallback" class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold uppercase">?</div>
+                            </div>
                             <div>
                                 <p id="uploader-name" class="font-semibold text-base leading-none">OopToop Creator</p>
-                                <p class="text-sm text-gray-500 mt-1">1.2M subscribers</p>
+                                <p id="sub-count" class="text-sm text-gray-500 mt-1">-- subscribers</p>
                             </div>
                             <button class="ml-4 bg-black text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">Subscribe</button>
                         </div>
@@ -127,94 +134,12 @@
 <script>
     lucide.createIcons();
 
-    /* ---------- AUTH (GUN) - UPDATED WITH DUPLICATE CHECK ---------- */
-lucide.createIcons();
-
-/* ---------- AUTH (GUN) - FIXED & MULTI-DEVICE ---------- */
-
-const gun = Gun({
-  peers: ['https://gun-manhattan.herokuapp.com/gun'],
-  localStorage: true
-});
-
-const user = gun.user(); // ❗ NO recall here
-
-const ui = {
-  profile: document.getElementById('user-profile'),
-  signin: document.getElementById('signin-btn'),
-  register: document.getElementById('register-btn'),
-  signout: document.getElementById('signout-btn')
-};
-
-function updateAuth() {
-  if (user.is) {
-    ui.profile.classList.remove('hidden');
-    ui.signout.classList.remove('hidden');
-    ui.signin.classList.add('hidden');
-    ui.register.classList.add('hidden');
-
-    const alias = user.is.alias || '?';
-    ui.profile.textContent = alias[0].toUpperCase();
-  } else {
-    ui.profile.classList.add('hidden');
-    ui.signout.classList.add('hidden');
-    ui.signin.classList.remove('hidden');
-    ui.register.classList.remove('hidden');
-  }
-}
-
-// Restore session if exists
-gun.on('auth', () => updateAuth());
-
-updateAuth();
-
-/* ---------- SIGN IN ---------- */
-ui.signin.onclick = () => {
-  let u = prompt('Username');
-  let p = prompt('Password');
-
-  if (!u || !p) return alert('Missing fields');
-
-  u = u.trim().toLowerCase(); // normalize
-
-  user.auth(u, p, ack => {
-    if (ack.err) {
-      alert('Invalid username or password');
-    } else {
-      updateAuth();
-    }
-  });
-};
-
-/* ---------- REGISTER ---------- */
-ui.register.onclick = () => {
-  let u = prompt('Choose a username');
-  let p = prompt('Choose a password');
-
-  if (!u || !p) return alert('Missing fields');
-
-  u = u.trim().toLowerCase(); // normalize
-
-  user.create(u, p, ack => {
-    if (ack.err) {
-      alert(ack.err); // Gun will say if name exists
-    } else {
-      alert('Account created! You can now sign in.');
-    }
-  });
-};
-
-/* ---------- SIGN OUT ---------- */
-ui.signout.onclick = () => {
-  user.leave();
-  updateAuth();
-};
-
     // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
     const repo = 'videos';
     const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
     const metadataBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/metadata/`;
+    const pfpBase = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/`;
 
     function getQueryParam(name) {
         const params = new URLSearchParams(window.location.search);
@@ -224,42 +149,41 @@ ui.signout.onclick = () => {
     const videoFile = getQueryParam('id');
 
     if (videoFile) {
-    fetch(metadataBase + videoFile)
-        .then(res => res.json())
-        .then(data => {
+        // Fetch Metadata and Leaderboard
+        Promise.all([
+            fetch(metadataBase + videoFile).then(res => res.json()),
+            fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json())
+        ])
+        .then(([data, leaderboard]) => {
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || "No description.";
             document.getElementById('video-date').textContent = data.date || "Unknown date";
-
+            
             const uploader = data.author || data.uploader || 'OopToop Creator';
             document.getElementById('uploader-name').textContent = uploader;
+            
+            // Sub count from leaderboard
+            const subs = leaderboard[uploader];
+            document.getElementById('sub-count').textContent = subs !== undefined 
+                ? `${subs.toLocaleString()} subscribers` 
+                : "1.2M subscribers";
 
-            const channelIconEl = document.getElementById('channel-icon');
-            channelIconEl.textContent = ''; // clear placeholder
+            // Profile Picture Logic
+            const pfpImg = document.getElementById('channel-pfp');
+            const fallback = document.getElementById('pfp-fallback');
+            const pfpUrl = `${pfpBase}${encodeURIComponent(uploader)}.jpg`;
 
-            // --- PROFILE PICTURE LOGIC ---
-            const img = new Image();
-            img.src = `https://raw.githubusercontent.com/OopToop/videos/db303149381890c0b7c4b0984e1c615ed1c45a3a/profile%20pictures/${encodeURIComponent(uploader)}.jpg`;
-            img.alt = uploader;
-            img.className = 'w-10 h-10 rounded-full object-cover';
-            img.onload = () => channelIconEl.appendChild(img);
-            img.onerror = () => {
-                // fallback to placeholder
-                channelIconEl.textContent = uploader.charAt(0).toUpperCase();
-                channelIconEl.classList.add('bg-gray-200', 'flex', 'items-center', 'justify-center', 'font-bold');
+            pfpImg.onload = () => {
+                pfpImg.classList.remove('hidden');
+                fallback.classList.add('hidden');
             };
+            pfpImg.onerror = () => {
+                pfpImg.classList.add('hidden');
+                fallback.classList.remove('hidden');
+                fallback.textContent = uploader.charAt(0).toUpperCase();
+            };
+            pfpImg.src = pfpUrl;
 
-            // --- SUBSCRIBERS FROM LEADERBOARD ---
-            fetch('https://raw.githubusercontent.com/OopToop/videos/7a0ae0b1cd94be32a6ee325919bc68c249d2252c/leaderboard.json')
-                .then(r => r.json())
-                .then(leaderboard => {
-                    const subs = leaderboard[uploader] || 0;
-                    const subEl = channelIconEl.nextElementSibling.querySelector('p.text-sm');
-                    if (subEl) subEl.textContent = `${subs.toLocaleString()} subscribers`;
-                })
-                .catch(err => console.error('Leaderboard fetch error:', err));
-
-            // --- VIEWS LOGIC (local only, as before) ---
             const viewsEl = document.getElementById('video-views');
             let viewsKey = `views-${videoFile}`;
             let views = localStorage.getItem(viewsKey) || data.views || 0;
@@ -267,11 +191,10 @@ ui.signout.onclick = () => {
             localStorage.setItem(viewsKey, views);
             viewsEl.textContent = views.toLocaleString();
 
-            // --- VIDEO PLAYER ---
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
 
-            // --- STARS ---
+            // Stars logic
             const stars = document.querySelectorAll('.star');
             let ratingKey = `rating-${videoFile}`;
             let savedRating = localStorage.getItem(ratingKey) || 0;
@@ -295,7 +218,14 @@ ui.signout.onclick = () => {
         .catch(err => {
             document.getElementById('video-title').textContent = "Error loading video";
         });
-}
+    }
+
+    // --- SEARCH REDIRECT ---
+    document.getElementById('search-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+        }
+    });
 </script>
 
 </body>
