@@ -126,47 +126,78 @@
 <script>
     lucide.createIcons();
 
-    /* ---------- AUTH (GUN) - EXACT COPY FROM HOME ---------- */
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const user = gun.user().recall({ sessionStorage: true });
+    /* ---------- AUTH (GUN) - UPDATED WITH DUPLICATE CHECK ---------- */
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+const user = gun.user().recall({ sessionStorage: true });
 
-    const ui = {
-        profile: document.getElementById('user-profile'),
-        signin: document.getElementById('signin-btn'),
-        register: document.getElementById('register-btn'),
-        signout: document.getElementById('signout-btn')
-    };
+const ui = {
+    profile: document.getElementById('user-profile'),
+    signin: document.getElementById('signin-btn'),
+    register: document.getElementById('register-btn'),
+    signout: document.getElementById('signout-btn')
+};
 
-    function updateAuth() {
-        if (user.is) {
-            ui.profile.classList.remove('hidden');
-            ui.signout.classList.remove('hidden');
-            ui.signin.classList.add('hidden');
-            ui.register.classList.add('hidden');
-            user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
-        } else {
-            ui.profile.classList.add('hidden');
-            ui.signout.classList.add('hidden');
-            ui.signin.classList.remove('hidden');
-            ui.register.classList.remove('hidden');
-        }
+function updateAuth() {
+    if (user.is) {
+        ui.profile.classList.remove('hidden');
+        ui.signout.classList.remove('hidden');
+        ui.signin.classList.add('hidden');
+        ui.register.classList.add('hidden');
+        user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
+    } else {
+        ui.profile.classList.add('hidden');
+        ui.signout.classList.add('hidden');
+        ui.signin.classList.remove('hidden');
+        ui.register.classList.remove('hidden');
     }
+}
 
+updateAuth();
+
+// ---------------- SIGN IN ----------------
+ui.signin.onclick = () => {
+    const u = prompt('Username');
+    const p = prompt('Password');
+
+    if (!u || !p) return alert('Please enter both username and password');
+
+    // Check if user exists
+    gun.get('~@' + u).once(data => {
+        if (!data) {
+            alert('Username does not exist!');
+        } else {
+            user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
+        }
+    });
+};
+
+// ---------------- REGISTER ----------------
+ui.register.onclick = () => {
+    const u = prompt('Username');
+    const p = prompt('Password');
+
+    if (!u || !p) return alert('Please enter both username and password');
+
+    // Check if username is already taken
+    gun.get('~@' + u).once(existing => {
+        if (existing) {
+            alert('Username already exists! Please choose another.');
+        } else {
+            // Safe to create
+            user.create(u, p, ack => {
+                if (ack.err) alert(ack.err);
+                else alert('Account created!');
+            });
+        }
+    });
+};
+
+// ---------------- SIGN OUT ----------------
+ui.signout.onclick = () => {
+    user.leave();
     updateAuth();
+};
 
-    ui.signin.onclick = () => {
-        const u = prompt('Username');
-        const p = prompt('Password');
-        user.auth(u, p, ack => ack.err ? alert(ack.err) : updateAuth());
-    };
-
-    ui.register.onclick = () => {
-        const u = prompt('Username');
-        const p = prompt('Password');
-        user.create(u, p, ack => ack.err ? alert(ack.err) : alert('Account created'));
-    };
-
-    ui.signout.onclick = () => { user.leave(); updateAuth(); };
 
     // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
