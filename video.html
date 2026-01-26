@@ -182,59 +182,78 @@
     const videoFile = getQueryParam('id');
 
     if (videoFile) {
-        fetch(metadataBase + videoFile)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('video-title').textContent = data.title;
-                document.getElementById('video-description').textContent = data.description || "No description.";
-                document.getElementById('video-date').textContent = data.date || "Unknown date";
-                
-                const uploader = data.author || data.uploader || 'OopToop Creator';
-                document.getElementById('uploader-name').textContent = uploader;
-                document.getElementById('channel-icon').textContent = uploader.charAt(0);
+    fetch(metadataBase + videoFile)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('video-title').textContent = data.title;
+            document.getElementById('video-description').textContent = data.description || "No description.";
+            document.getElementById('video-date').textContent = data.date || "Unknown date";
 
-                const viewsEl = document.getElementById('video-views');
-                let viewsKey = `views-${videoFile}`;
-                let views = localStorage.getItem(viewsKey) || data.views || 0;
-                views = parseInt(views) + 1;
-                localStorage.setItem(viewsKey, views);
-                viewsEl.textContent = views.toLocaleString();
+            const uploader = data.author || data.uploader || 'OopToop Creator';
+            document.getElementById('uploader-name').textContent = uploader;
 
-                const player = document.getElementById('video-player');
-                player.src = videoBase + encodeURIComponent(data.filename);
+            const channelIconEl = document.getElementById('channel-icon');
+            channelIconEl.textContent = ''; // clear placeholder
 
-                // Stars logic
-                const stars = document.querySelectorAll('.star');
-                let ratingKey = `rating-${videoFile}`;
-                let savedRating = localStorage.getItem(ratingKey) || 0;
+            // --- PROFILE PICTURE LOGIC ---
+            const img = new Image();
+            img.src = `https://raw.githubusercontent.com/OopToop/videos/db303149381890c0b7c4b0984e1c615ed1c45a3a/profile%20pictures/${encodeURIComponent(uploader)}.jpg`;
+            img.alt = uploader;
+            img.className = 'w-10 h-10 rounded-full object-cover';
+            img.onload = () => channelIconEl.appendChild(img);
+            img.onerror = () => {
+                // fallback to placeholder
+                channelIconEl.textContent = uploader.charAt(0).toUpperCase();
+                channelIconEl.classList.add('bg-gray-200', 'flex', 'items-center', 'justify-center', 'font-bold');
+            };
 
-                const updateStars = (val) => {
-                    stars.forEach(s => {
-                        if (parseInt(s.dataset.value) <= val) s.classList.add('selected');
-                        else s.classList.remove('selected');
-                    });
-                };
-                updateStars(savedRating);
+            // --- SUBSCRIBERS FROM LEADERBOARD ---
+            fetch('https://raw.githubusercontent.com/OopToop/videos/7a0ae0b1cd94be32a6ee325919bc68c249d2252c/leaderboard.json')
+                .then(r => r.json())
+                .then(leaderboard => {
+                    const subs = leaderboard[uploader] || 0;
+                    const subEl = channelIconEl.nextElementSibling.querySelector('p.text-sm');
+                    if (subEl) subEl.textContent = `${subs.toLocaleString()} subscribers`;
+                })
+                .catch(err => console.error('Leaderboard fetch error:', err));
 
-                stars.forEach(star => {
-                    star.addEventListener('click', () => {
-                        const val = star.dataset.value;
-                        localStorage.setItem(ratingKey, val);
-                        updateStars(val);
-                    });
+            // --- VIEWS LOGIC (local only, as before) ---
+            const viewsEl = document.getElementById('video-views');
+            let viewsKey = `views-${videoFile}`;
+            let views = localStorage.getItem(viewsKey) || data.views || 0;
+            views = parseInt(views) + 1;
+            localStorage.setItem(viewsKey, views);
+            viewsEl.textContent = views.toLocaleString();
+
+            // --- VIDEO PLAYER ---
+            const player = document.getElementById('video-player');
+            player.src = videoBase + encodeURIComponent(data.filename);
+
+            // --- STARS ---
+            const stars = document.querySelectorAll('.star');
+            let ratingKey = `rating-${videoFile}`;
+            let savedRating = localStorage.getItem(ratingKey) || 0;
+
+            const updateStars = (val) => {
+                stars.forEach(s => {
+                    if (parseInt(s.dataset.value) <= val) s.classList.add('selected');
+                    else s.classList.remove('selected');
                 });
-            })
-            .catch(err => {
-                document.getElementById('video-title').textContent = "Error loading video";
-            });
-    }
+            };
+            updateStars(savedRating);
 
-    // --- SEARCH REDIRECT ---
-    document.getElementById('search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
-        }
-    });
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const val = star.dataset.value;
+                    localStorage.setItem(ratingKey, val);
+                    updateStars(val);
+                });
+            });
+        })
+        .catch(err => {
+            document.getElementById('video-title').textContent = "Error loading video";
+        });
+}
 </script>
 
 </body>
