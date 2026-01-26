@@ -1,129 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OopToop - Watch</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-</head>
-
-<body class="font-sans antialiased bg-white text-black">
-
-<!-- NAV -->
-<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b">
-    <a href="index.html" class="text-xl font-bold">OopToop</a>
-
-    <div class="flex gap-2">
-        <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
-        <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
-        <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded">Sign in</button>
-        <button id="register-btn" class="border px-3 py-1 text-green-600 rounded">Register</button>
-    </div>
-</nav>
-
-<main class="pt-20 px-6">
-    <video id="video-player" controls class="w-full max-w-4xl mx-auto bg-black"></video>
-</main>
-
 <script>
 lucide.createIcons();
 
-/* =========================
-   AUTH — FIXED PROPERLY
-   ========================= */
+/* ---------- AUTH (GUN) - FIXED & MULTI-DEVICE ---------- */
 
 const gun = Gun({
-    peers: ['https://gun-manhattan.herokuapp.com/gun'],
-    localStorage: true
+  peers: ['https://gun-manhattan.herokuapp.com/gun'],
+  localStorage: true
 });
 
-const user = gun.user().recall({ localStorage: true });
+const user = gun.user(); // ❗ NO recall here
 
 const ui = {
-    profile: document.getElementById('user-profile'),
-    signin: document.getElementById('signin-btn'),
-    register: document.getElementById('register-btn'),
-    signout: document.getElementById('signout-btn')
+  profile: document.getElementById('user-profile'),
+  signin: document.getElementById('signin-btn'),
+  register: document.getElementById('register-btn'),
+  signout: document.getElementById('signout-btn')
 };
 
 function updateAuth() {
-    if (user.is && user.is.alias) {
-        ui.profile.textContent = user.is.alias[0].toUpperCase();
-        ui.profile.classList.remove('hidden');
-        ui.signout.classList.remove('hidden');
-        ui.signin.classList.add('hidden');
-        ui.register.classList.add('hidden');
-    } else {
-        ui.profile.classList.add('hidden');
-        ui.signout.classList.add('hidden');
-        ui.signin.classList.remove('hidden');
-        ui.register.classList.remove('hidden');
-    }
+  if (user.is) {
+    ui.profile.classList.remove('hidden');
+    ui.signout.classList.remove('hidden');
+    ui.signin.classList.add('hidden');
+    ui.register.classList.add('hidden');
+
+    const alias = user.is.alias || '?';
+    ui.profile.textContent = alias[0].toUpperCase();
+  } else {
+    ui.profile.classList.add('hidden');
+    ui.signout.classList.add('hidden');
+    ui.signin.classList.remove('hidden');
+    ui.register.classList.remove('hidden');
+  }
 }
 
-// Restore login on refresh / device
-user.get('alias').once(() => updateAuth());
+// Restore session if exists
+gun.on('auth', () => updateAuth());
 
-/* -------- SIGN IN -------- */
+updateAuth();
+
+/* ---------- SIGN IN ---------- */
 ui.signin.onclick = () => {
-    const alias = prompt('Username');
-    const pass = prompt('Password');
-    if (!alias || !pass) return;
+  let u = prompt('Username');
+  let p = prompt('Password');
 
-    user.auth(alias, pass, ack => {
-        if (ack.err) {
-            alert('Invalid login');
-        } else {
-            updateAuth();
-        }
-    });
+  if (!u || !p) return alert('Missing fields');
+
+  u = u.trim().toLowerCase(); // normalize
+
+  user.auth(u, p, ack => {
+    if (ack.err) {
+      alert('Invalid username or password');
+    } else {
+      updateAuth();
+    }
+  });
 };
 
-/* -------- REGISTER (LOCKED) -------- */
+/* ---------- REGISTER ---------- */
 ui.register.onclick = () => {
-    const alias = prompt('Username');
-    const pass = prompt('Password');
-    if (!alias || !pass) return;
+  let u = prompt('Choose a username');
+  let p = prompt('Choose a password');
 
-    // HARD CHECK — prevents duplicate accounts
-    gun.get('~@' + alias).once(data => {
-        if (data && Object.keys(data).length > 1) {
-            alert('Username already exists');
-            return;
-        }
+  if (!u || !p) return alert('Missing fields');
 
-        user.create(alias, pass, ack => {
-            if (ack.err) {
-                alert(ack.err);
-            } else {
-                alert('Account created. You can now sign in.');
-            }
-        });
-    });
+  u = u.trim().toLowerCase(); // normalize
+
+  user.create(u, p, ack => {
+    if (ack.err) {
+      alert(ack.err); // Gun will say if name exists
+    } else {
+      alert('Account created! You can now sign in.');
+    }
+  });
 };
 
-/* -------- SIGN OUT -------- */
+/* ---------- SIGN OUT ---------- */
 ui.signout.onclick = () => {
-    user.leave();
-    updateAuth();
+  user.leave();
+  updateAuth();
 };
-
-/* =========================
-   VIDEO LOADING (unchanged)
-   ========================= */
-
-const params = new URLSearchParams(location.search);
-const id = params.get('id');
-
-if (id) {
-    document.getElementById('video-player').src =
-        `https://raw.githubusercontent.com/OopToop/videos/main/videos/${id}`;
-}
 </script>
-
-</body>
-</html>
-
