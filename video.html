@@ -28,9 +28,32 @@
             background-color: black;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
+        /* Notification styling */
+        #copy-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f0f0f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #copy-toast.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="font-sans antialiased">
+
+    <!-- Copy Link Notification -->
+    <div id="copy-toast">Link Copied!</div>
 
     <!-- NAV -->
     <!-- Top Navigation Bar (Updated to match Home) -->
@@ -103,7 +126,7 @@
                                 <span class="star p-1" data-value="4"><i data-lucide="star" class="w-5 h-5"></i></span>
                                 <span class="star p-1" data-value="5"><i data-lucide="star" class="w-5 h-5"></i></span>
                             </div>
-                            <button class="flex items-center gap-2 hover:bg-gray-200 rounded-full transition-colors">
+                            <button id="share-btn" class="flex items-center gap-2 hover:bg-gray-200 rounded-full transition-colors px-2 py-1">
                                 <i data-lucide="share-2" class="w-5 h-5"></i>
                                 <span class="text-sm font-medium">Share</span>
                             </button>
@@ -219,6 +242,28 @@
             document.getElementById('video-title').textContent = "Error loading video";
         });
     }
+
+    // --- SHARE LOGIC ---
+    const shareBtn = document.getElementById('share-btn');
+    const toast = document.getElementById('copy-toast');
+
+    shareBtn.addEventListener('click', () => {
+        const url = window.location.href;
+        
+        // Use standard clipboard copy fallback for iFrame environments
+        const el = document.createElement('textarea');
+        el.value = url;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        // Show Toast
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2000);
+    });
 
     // --- SEARCH REDIRECT ---
     document.getElementById('search-input').addEventListener('keypress', (e) => {
