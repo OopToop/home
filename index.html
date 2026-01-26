@@ -7,8 +7,6 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
 
 <style>
 body { background:#fff; color:#0f0f0f; }
@@ -21,9 +19,11 @@ body { background:#fff; color:#0f0f0f; }
 <body class="font-sans antialiased">
 
 <!-- NAV -->
- <!-- Top Navigation Bar -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
             <a href="index.html" class="flex items-center gap-1 group">
                 <div class="flex items-center">
                     <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
@@ -38,13 +38,16 @@ body { background:#fff; color:#0f0f0f; }
             </a>
         </div>
 
-  <input id="search-input" placeholder="Search" class="hidden md:block border rounded px-3 py-1">
+  <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
 
-  <div id="auth-section" class="flex gap-2">
-    <div id="user-profile" class="hidden w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white"></div>
-    <button id="signout-btn" class="hidden border px-3 py-1 text-red-600 rounded">Sign out</button>
-    <button id="signin-btn" class="border px-3 py-1 text-blue-600 rounded">Sign in</button>
-    <button id="register-btn" class="border px-3 py-1 text-green-600 rounded">Register</button>
+  <div id="action-section" class="flex gap-3 items-center">
+    <!-- Upload Button -->
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" 
+       target="_blank" 
+       class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
+        <i data-lucide="video" class="w-5 h-5"></i>
+        <span class="hidden sm:inline">Upload</span>
+    </a>
   </div>
 </nav>
 
@@ -52,13 +55,11 @@ body { background:#fff; color:#0f0f0f; }
 <main class="pt-16 px-6">
 
   <!-- TAGS -->
-  <div id="tags-bar" class="flex gap-2 mb-6">
-    <button class="tag-btn bg-black text-white px-3 py-1 rounded" data-tag="All">All</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Music">Music</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Gaming">Gaming</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Tech">Tech</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="reallife">Real Life</button>
-    <button class="tag-btn bg-gray-100 px-3 py-1 rounded" data-tag="Animation">Animation</button>
+  <div id="tags-bar" class="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
+    <button class="tag-btn bg-black text-white px-3 py-1 rounded whitespace-nowrap" data-tag="All">All</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Music">Music</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Gaming">Gaming</button>
+    <button class="tag-btn bg-gray-100 px-3 py-1 rounded whitespace-nowrap" data-tag="Tech">Tech</button>
   </div>
 
   <!-- VIDEO GRID -->
@@ -69,60 +70,14 @@ body { background:#fff; color:#0f0f0f; }
 <script>
 lucide.createIcons();
 
-/* ---------- AUTH (GUN) ---------- */
-const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const user = gun.user().recall({ sessionStorage:true });
-
-const ui = {
-  profile: document.getElementById('user-profile'),
-  signin: document.getElementById('signin-btn'),
-  register: document.getElementById('register-btn'),
-  signout: document.getElementById('signout-btn')
-};
-
-function updateAuth() {
-  if (user.is) {
-    ui.profile.classList.remove('hidden');
-    ui.signout.classList.remove('hidden');
-    ui.signin.classList.add('hidden');
-    ui.register.classList.add('hidden');
-    user.get('alias').once(a => ui.profile.textContent = a?.[0]?.toUpperCase() || '?');
-  } else {
-    ui.profile.classList.add('hidden');
-    ui.signout.classList.add('hidden');
-    ui.signin.classList.remove('hidden');
-    ui.register.classList.remove('hidden');
-  }
-}
-
-updateAuth();
-
-ui.signin.onclick = () => {
-  const u = prompt('Username');
-  const p = prompt('Password');
-  user.auth(u,p,ack=>ack.err?alert(ack.err):updateAuth());
-};
-
-ui.register.onclick = () => {
-  const u = prompt('Username');
-  const p = prompt('Password');
-  user.create(u,p,ack=>ack.err?alert(ack.err):alert('Account created'));
-};
-
-ui.signout.onclick = () => { user.leave(); updateAuth(); };
-
 /* ---------- VIDEOS ---------- */
 const feed = document.getElementById('video-feed');
 let allVideos = [];
 
-// Tag grouping for smarter filtering
 const tagGroups = {
-  "Music": ["music", "song", "audio", "musical"],
-  "Gaming": ["gaming", "games", "gameplay", "play", "minecraft", "roblox", "mario 64", "mario"],
-  "Tech": ["tech", "technology", "hardware", "coding", "programming"],
-  "Real Life": ["reallife", "rl", "real life", "life"],
-  "Animation": ["animated", "animation", "animations"]
- 
+  "Music": ["music", "song", "audio", "musical", "singer", "concert"],
+  "Gaming": ["gaming", "games", "gameplay", "play", "walkthrough", "speedrun"],
+  "Tech": ["tech", "technology", "hardware", "coding", "programming", "review", "unboxing"]
 };
 
 fetch('https://api.github.com/repos/OopToop/videos/contents/metadata')
@@ -140,10 +95,11 @@ function render(list){
   feed.innerHTML='';
   list.forEach(v=>{
     const c=document.createElement('div');
-    c.className='video-card cursor-pointer';
+    c.className='video-card cursor-pointer group';
     c.innerHTML=`
-      <img class="video-thumb rounded-xl mb-2" src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
-      <h3 class="font-semibold">${v.data.title}</h3>
+      <img class="video-thumb rounded-xl mb-2 w-full aspect-video object-cover" src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
+      <h3 class="font-semibold line-clamp-2">${v.data.title}</h3>
+      <p class="text-sm text-gray-600 mt-1">${v.data.author || v.data.uploader || 'OopToop Creator'}</p>
     `;
     c.onclick=()=>location.href=`video.html?id=${encodeURIComponent(v.file)}`;
     feed.appendChild(c);
@@ -163,7 +119,6 @@ document.getElementById('tags-bar').onclick = e => {
 
   const category = btn.dataset.tag;
 
-  // Update visual state of buttons
   document.querySelectorAll('.tag-btn').forEach(b => {
     b.classList.remove('bg-black', 'text-white');
     b.classList.add('bg-gray-100', 'text-black');
@@ -176,7 +131,6 @@ document.getElementById('tags-bar').onclick = e => {
   } else {
     const keywords = tagGroups[category] || [category.toLowerCase()];
     const filtered = allVideos.filter(v => {
-      // Improved tag checking: check 'tags' string or even 'category' if it exists in data
       const vTags = ((v.data.tags || "") + " " + (v.data.category || "")).toLowerCase();
       return keywords.some(k => vTags.includes(k));
     });
