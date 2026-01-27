@@ -208,12 +208,10 @@
             };
             pfpImg.src = pfpUrl;
 
+            // VIEW COUNT LOGIC: Rip directly from metadata file instead of using Local Storage
             const viewsEl = document.getElementById('video-views');
-            let viewsKey = `views-${videoFile}`;
-            let views = localStorage.getItem(viewsKey) || data.views || 0;
-            views = parseInt(views) + 1;
-            localStorage.setItem(viewsKey, views);
-            viewsEl.textContent = views.toLocaleString();
+            const rawViews = data.views || 0;
+            viewsEl.textContent = parseInt(rawViews).toLocaleString();
 
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
