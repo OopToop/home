@@ -86,6 +86,15 @@ const tagGroups = {
   "Animation": ["animation", "animated"]
 };
 
+// Shuffle function using Fisher-Yates algorithm
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 // Initial data fetch: Leaderboard and then Metadata
 fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
   .then(r => r.json())
@@ -99,8 +108,9 @@ fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
          .map(f => fetch(f.download_url).then(r => r.json()).then(d => ({file: f.name, data: d})))
   ))
   .then(videos => {
-    allVideos = videos;
-    render(videos);
+    // Randomize the initial load order
+    allVideos = shuffleArray(videos);
+    render(allVideos);
   })
   .catch(err => console.error("Error loading OopToop data:", err));
 
