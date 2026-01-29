@@ -11,7 +11,6 @@
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="icon" href="favicon.png" type="image/png">
     <link rel="apple-touch-icon" href="favicon.png">
-
     <style>
         body {
             background-color: #ffffff;
@@ -60,10 +59,8 @@
     <div id="copy-toast">Link Copied!</div>
 
     <!-- NAV -->
-    <!-- Top Navigation Bar -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
-            <!-- Updated Leaderboard Button Link to External URL -->
             <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='https://ooptoop.github.io/home/leaderboard.html'">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
@@ -73,9 +70,6 @@
                          alt="OopToop Logo" 
                          class="h-8 w-auto mr-1"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    <div class="hidden bg-red-600 rounded-lg p-1 group-hover:bg-red-700 transition-colors">
-                        <i data-lucide="play" class="w-5 h-5 text-white fill-current"></i>
-                    </div>
                 </div>
                 <span class="text-xl font-bold tracking-tighter">OopToop</span>
             </a>
@@ -84,7 +78,6 @@
         <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
 
         <div id="action-section" class="flex gap-3 items-center">
-            <!-- Upload Button -->
             <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" 
                target="_blank" 
                class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
@@ -108,15 +101,15 @@
                     <h1 id="video-title" class="text-xl font-bold line-clamp-2">Loading...</h1>
                     
                     <div class="mt-3 flex flex-wrap items-center justify-between gap-4">
-                        <!-- Author Info -->
-                        <div class="flex items-center gap-3">
+                        <!-- Author Info - Clickable Area -->
+                        <div id="creator-link" class="flex items-center gap-3 cursor-pointer group">
                             <!-- Dynamic Channel Profile Picture -->
                             <div class="relative w-10 h-10 shrink-0">
                                 <img id="channel-pfp" src="" alt="" class="w-10 h-10 rounded-full bg-gray-200 object-cover hidden">
                                 <div id="pfp-fallback" class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold uppercase">?</div>
                             </div>
                             <div>
-                                <p id="uploader-name" class="font-semibold text-base leading-none">OopToop Creator</p>
+                                <p id="uploader-name" class="font-semibold text-base leading-none group-hover:text-blue-600 transition-colors">OopToop Creator</p>
                                 <p id="sub-count" class="text-sm text-gray-500 mt-1">-- subscribers</p>
                             </div>
                             <button class="ml-4 bg-black text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">Subscribe</button>
@@ -152,7 +145,7 @@
             <div class="lg:w-[350px] xl:w-[400px]">
                 <h2 class="font-bold mb-4">Up next</h2>
                 <div id="sidebar-feed" class="flex flex-col gap-4">
-                    <p class="text-gray-400 text-sm italic">Loading related videos...</p>
+                    <!-- Sidebar populated by JS -->
                 </div>
             </div>
 
@@ -162,7 +155,6 @@
 <script>
     lucide.createIcons();
 
-    // --- VIDEO LOADING LOGIC ---
     const owner = 'OopToop';
     const repo = 'videos';
     const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
@@ -174,29 +166,39 @@
         return params.get(name);
     }
 
-    const videoFile = getQueryParam('id');
+    const videoId = getQueryParam('id');
 
-    if (videoFile) {
-        // Fetch Metadata and Leaderboard
+    if (videoId) {
         Promise.all([
-            fetch(metadataBase + videoFile).then(res => res.json()),
-            fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json())
+            fetch(metadataBase + videoId).then(res => res.json()),
+            fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json()),
+            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`).then(res => res.json())
         ])
-        .then(([data, leaderboard]) => {
+        .then(([data, leaderboard, allFiles]) => {
+            // Main Video Data
+            const uploader = data.author || data.uploader || 'OopToop Creator';
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || "No description.";
             document.getElementById('video-date').textContent = data.date || "Unknown date";
-            
-            const uploader = data.author || data.uploader || 'OopToop Creator';
             document.getElementById('uploader-name').textContent = uploader;
+            document.getElementById('video-views').textContent = (data.views || 0).toLocaleString();
             
-            // Sub count from leaderboard
+            // Set Player
+            const player = document.getElementById('video-player');
+            player.src = videoBase + encodeURIComponent(data.filename);
+
+            // Subscriber Count
             const subs = leaderboard[uploader];
             document.getElementById('sub-count').textContent = subs !== undefined 
                 ? `${subs.toLocaleString()} subscribers` 
-                : "1.2M subscribers";
+                : "0 subscribers";
 
-            // Profile Picture Logic
+            // Clickable Channel Logic
+            document.getElementById('creator-link').onclick = () => {
+                location.href = `channel.html?c=${encodeURIComponent(uploader)}`;
+            };
+
+            // Profile Picture
             const pfpImg = document.getElementById('channel-pfp');
             const fallback = document.getElementById('pfp-fallback');
             const pfpUrl = `${pfpBase}${encodeURIComponent(uploader)}.jpg`;
@@ -212,19 +214,35 @@
             };
             pfpImg.src = pfpUrl;
 
-            // VIEW COUNT LOGIC: Rip directly from metadata file instead of using Local Storage
-            const viewsEl = document.getElementById('video-views');
-            const rawViews = data.views || 0;
-            viewsEl.textContent = parseInt(rawViews).toLocaleString();
+            // Sidebar: Up Next (Randomized selection)
+            const sidebar = document.getElementById('sidebar-feed');
+            sidebar.innerHTML = '';
+            const otherVideos = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
+            
+            // Just show top 8 other videos
+            otherVideos.slice(0, 8).forEach(file => {
+                fetch(file.download_url).then(r => r.json()).then(vData => {
+                    const item = document.createElement('div');
+                    item.className = 'flex gap-2 cursor-pointer group';
+                    item.onclick = () => location.href = `video.html?id=${file.name}`;
+                    item.innerHTML = `
+                        <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                            <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${vData.thumbnail}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${vData.title}</h4>
+                            <p class="text-xs text-gray-500 mt-1">${vData.author || vData.uploader}</p>
+                            <p class="text-xs text-gray-400">${(vData.views || 0).toLocaleString()} views</p>
+                        </div>
+                    `;
+                    sidebar.appendChild(item);
+                });
+            });
 
-            const player = document.getElementById('video-player');
-            player.src = videoBase + encodeURIComponent(data.filename);
-
-            // Stars logic
+            // Star Rating Persistence
             const stars = document.querySelectorAll('.star');
-            let ratingKey = `rating-${videoFile}`;
+            let ratingKey = `rating-${videoId}`;
             let savedRating = localStorage.getItem(ratingKey) || 0;
-
             const updateStars = (val) => {
                 stars.forEach(s => {
                     if (parseInt(s.dataset.value) <= val) s.classList.add('selected');
@@ -232,7 +250,6 @@
                 });
             };
             updateStars(savedRating);
-
             stars.forEach(star => {
                 star.addEventListener('click', () => {
                     const val = star.dataset.value;
@@ -242,37 +259,23 @@
             });
         })
         .catch(err => {
+            console.error(err);
             document.getElementById('video-title').textContent = "Error loading video";
         });
     }
 
-    // --- SHARE LOGIC ---
+    // Share Logic
     const shareBtn = document.getElementById('share-btn');
     const toast = document.getElementById('copy-toast');
-
     shareBtn.addEventListener('click', () => {
-        const url = window.location.href;
-        
-        // Use standard clipboard copy fallback for iFrame environments
         const el = document.createElement('textarea');
-        el.value = url;
+        el.value = window.location.href;
         document.body.appendChild(el);
         el.select();
         document.execCommand('copy');
         document.body.removeChild(el);
-
-        // Show Toast
         toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2000);
-    });
-
-    // --- SEARCH REDIRECT ---
-    document.getElementById('search-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            window.location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
-        }
+        setTimeout(() => toast.classList.remove('show'), 2000);
     });
 </script>
 
