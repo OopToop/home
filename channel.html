@@ -6,8 +6,9 @@
 <title>OopToop - Channel</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="favicon.png">
 <style>
     body { background:#fff; color:#0f0f0f; }
     .video-card:hover .video-thumb { border-radius:0; transition:.2s }
@@ -71,14 +72,12 @@ const creatorName = params.get('c');
 
 async function init() {
     if (!creatorName) {
-        // Fix for Location 'index.html' not a valid URL error
         const currentUrl = window.location.href;
         const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
         window.location.href = baseUrl + 'index.html';
         return;
     }
 
-    // Set UI Basics
     document.getElementById('channel-name').textContent = creatorName;
     const pfpUrl = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/${encodeURIComponent(creatorName)}.jpg`;
     const pfpImg = document.getElementById('channel-pfp');
@@ -89,12 +88,10 @@ async function init() {
     pfpImg.src = pfpUrl;
 
     try {
-        // Fetch Leaderboard for subs
         const lbRes = await fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json');
         const lbData = await lbRes.json();
         document.getElementById('channel-subs').textContent = (lbData[creatorName]?.toLocaleString() || "0") + " subscribers";
 
-        // Fetch Metadata for videos
         const filesRes = await fetch('https://api.github.com/repos/OopToop/videos/contents/metadata');
         const files = await filesRes.json();
         
@@ -103,7 +100,15 @@ async function init() {
             .map(f => fetch(f.download_url).then(r => r.json()).then(d => ({file: f.name, data: d})));
         
         const allVideos = await Promise.all(videoPromises);
-        const creatorVideos = allVideos.filter(v => (v.data.author || v.data.uploader) === creatorName);
+        
+        // Filter and then Sort by date (Newest to Oldest)
+        const creatorVideos = allVideos
+            .filter(v => (v.data.author || v.data.uploader) === creatorName)
+            .sort((a, b) => {
+                const dateA = new Date(a.data.date || 0);
+                const dateB = new Date(b.data.date || 0);
+                return dateB - dateA;
+            });
 
         const grid = document.getElementById('video-grid');
         grid.innerHTML = creatorVideos.length ? '' : '<p class="text-gray-500">No videos uploaded yet.</p>';
