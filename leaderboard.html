@@ -21,7 +21,7 @@
     <!-- Top Navigation Bar -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
-            <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='leaderboard.html'">
+            <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='https://ooptoop.github.io/home/leaderboard.html'">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
             <a href="index.html" class="flex items-center gap-1 group">
@@ -92,7 +92,7 @@
                     const pfpUrl = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/${encodeURIComponent(creator.name)}.jpg`;
 
                     const item = document.createElement('div');
-                    item.className = `flex items-center justify-between p-4 rounded-xl transition-transform hover:scale-[1.01] ${specialClass}`;
+                    item.className = `flex items-center justify-between p-4 rounded-xl transition-transform ${specialClass}`;
                     item.innerHTML = `
                         <div class="flex items-center gap-4">
                             <span class="font-bold text-lg w-6 text-center">${rank}</span>
@@ -105,6 +105,10 @@
                                 <p class="text-sm opacity-70">${creator.subs.toLocaleString()} subscribers</p>
                             </div>
                         </div>
+                        <a href="https://ooptoop.github.io/home/channel.html?c=${encodeURIComponent(creator.name)}" 
+                           class="bg-white/80 hover:bg-white text-gray-900 px-4 py-2 rounded-full text-sm font-bold border border-gray-200 transition-colors shrink-0">
+                           View Profile
+                        </a>
                     `;
                     list.appendChild(item);
                 });
