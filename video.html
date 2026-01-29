@@ -169,13 +169,14 @@
     const videoId = getQueryParam('id');
 
     if (videoId) {
+        // Step 1: Fetch Primary Data
         Promise.all([
             fetch(metadataBase + videoId).then(res => res.json()),
             fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json()),
             fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`).then(res => res.json())
         ])
         .then(async ([data, leaderboard, allFiles]) => {
-            // Main Video Data
+            // --- MAIN VIDEO SETUP ---
             const uploader = data.author || data.uploader || 'OopToop Creator';
             const currentTags = (data.tags || "").split(',').map(t => t.trim().toLowerCase()).filter(t => t);
             
@@ -188,6 +189,7 @@
             // Set Player
             const player = document.getElementById('video-player');
             player.src = videoBase + encodeURIComponent(data.filename);
+            player.load(); // Explicitly load to ensure playback starts
 
             // Subscriber Count
             const subs = leaderboard[uploader];
@@ -218,53 +220,68 @@
 
             // --- REFINED UP NEXT RECOMMENDATION LOGIC ---
             const sidebar = document.getElementById('sidebar-feed');
-            sidebar.innerHTML = '';
+            sidebar.innerHTML = '<p class="text-sm text-gray-400">Loading recommendations...</p>';
             
-            // Filter files and fetch their metadata
-            const metadataPromises = allFiles
-                .filter(f => f.name !== videoId && f.name.endsWith('.json'))
-                .map(file => fetch(file.download_url).then(r => r.json()).then(d => ({ file: file.name, data: d })));
-            
-            const potentialVideos = await Promise.all(metadataPromises);
-
-            // Score the videos based on uploader and tags
-            const scoredVideos = potentialVideos.map(v => {
-                let score = 0;
-                const vAuthor = v.data.author || v.data.uploader;
-                const vTags = (v.data.tags || "").split(',').map(t => t.trim().toLowerCase());
+            try {
+                // Filter metadata files (excluding current)
+                const metadataFiles = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
                 
-                // Boost score for same creator
-                if (vAuthor === uploader) score += 10;
+                // Fetch details for all potential videos to calculate scores
+                const metadataPromises = metadataFiles.map(file => 
+                    fetch(file.download_url)
+                        .then(r => r.json())
+                        .then(d => ({ file: file.name, data: d }))
+                        .catch(() => null)
+                );
                 
-                // Boost score for shared tags
-                const commonTags = currentTags.filter(t => vTags.includes(t));
-                score += (commonTags.length * 5);
+                const potentialVideos = (await Promise.all(metadataPromises)).filter(v => v !== null);
 
-                return { ...v, score };
-            });
+                // Score the videos
+                const scoredVideos = potentialVideos.map(v => {
+                    let score = 0;
+                    const vAuthor = v.data.author || v.data.uploader;
+                    const vTags = (v.data.tags || "").split(',').map(t => t.trim().toLowerCase());
+                    
+                    // Boost score for same creator
+                    if (vAuthor === uploader) score += 20;
+                    
+                    // Boost score for shared tags
+                    const commonTags = currentTags.filter(t => vTags.includes(t));
+                    score += (commonTags.length * 10);
 
-            // Sort by score (highest first), then slice the top 12 to pick from
-            scoredVideos.sort((a, b) => b.score - a.score);
-            
-            // Pick top 8, if they have the same score we shuffle them a bit
-            const topRecommended = scoredVideos.slice(0, 8);
+                    // Add a tiny random factor to break ties and keep it fresh
+                    score += Math.random() * 2;
 
-            topRecommended.forEach(v => {
-                const item = document.createElement('div');
-                item.className = 'flex gap-2 cursor-pointer group';
-                item.onclick = () => location.href = `video.html?id=${v.file}`;
-                item.innerHTML = `
-                    <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                        <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex flex-col overflow-hidden">
-                        <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${v.data.title}</h4>
-                        <p class="text-xs text-gray-500 mt-1">${v.data.author || v.data.uploader}</p>
-                        <p class="text-xs text-gray-400">${(v.data.views || 0).toLocaleString()} views</p>
-                    </div>
-                `;
-                sidebar.appendChild(item);
-            });
+                    return { ...v, score };
+                });
+
+                // Sort by score (highest first)
+                scoredVideos.sort((a, b) => b.score - a.score);
+                
+                // Render top 8
+                sidebar.innerHTML = '';
+                scoredVideos.slice(0, 8).forEach(v => {
+                    const item = document.createElement('div');
+                    item.className = 'flex gap-2 cursor-pointer group';
+                    item.onclick = () => location.href = `video.html?id=${v.file}`;
+                    item.innerHTML = `
+                        <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                            <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}" 
+                                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                 onerror="this.src='https://via.placeholder.com/160x90?text=No+Thumb'">
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${v.data.title}</h4>
+                            <p class="text-xs text-gray-500 mt-1">${v.data.author || v.data.uploader}</p>
+                            <p class="text-xs text-gray-400">${(v.data.views || 0).toLocaleString()} views</p>
+                        </div>
+                    `;
+                    sidebar.appendChild(item);
+                });
+            } catch (recErr) {
+                console.error("Failed to load recommendations", recErr);
+                sidebar.innerHTML = '<p class="text-sm text-gray-400">Could not load recommendations.</p>';
+            }
 
             // Star Rating Persistence
             const stars = document.querySelectorAll('.star');
@@ -286,7 +303,7 @@
             });
         })
         .catch(err => {
-            console.error(err);
+            console.error("Global load error:", err);
             document.getElementById('video-title').textContent = "Error loading video";
         });
     }
