@@ -1,130 +1,337 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OopToop - Watch</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/lucide@latest"></script>
-
-<style>
-video { background:black; }
-.star.selected svg { fill:#fbbf24; color:#fbbf24; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OopToop - Watch</title>
+    <!-- Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="favicon.png">
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #0f0f0f;
+        }
+        .star {
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+        .star:hover {
+            transform: scale(1.1);
+        }
+        .star.selected svg {
+            fill: #fbbf24;
+            color: #fbbf24;
+        }
+        video {
+            background-color: black;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        /* Notification styling */
+        #copy-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f0f0f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        #copy-toast.show {
+            opacity: 1;
+        }
+    </style>
 </head>
+<body class="font-sans antialiased">
 
-<body class="bg-white text-black">
+    <!-- Copy Link Notification -->
+    <div id="copy-toast">Link Copied!</div>
 
-<nav class="fixed top-0 left-0 right-0 h-14 bg-white border-b flex items-center px-4 z-50">
-  <a href="index.html" class="font-bold text-xl">OopToop</a>
-</nav>
+    <!-- NAV -->
+    <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
+        <div class="flex items-center gap-4">
+            <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='https://ooptoop.github.io/home/leaderboard.html'">
+                <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <a href="index.html" class="flex items-center gap-1 group">
+                <div class="flex items-center">
+                    <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" 
+                         alt="OopToop Logo" 
+                         class="h-8 w-auto mr-1"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                </div>
+                <span class="text-xl font-bold tracking-tighter">OopToop</span>
+            </a>
+        </div>
 
-<main class="pt-20 px-4 max-w-[1500px] mx-auto">
-<div class="flex flex-col lg:flex-row gap-6">
+        <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
 
-<!-- MAIN VIDEO -->
-<div class="flex-1">
-  <video id="video" controls class="w-full aspect-video rounded-xl"></video>
+        <div id="action-section" class="flex gap-3 items-center">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" 
+               target="_blank" 
+               class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
+                <i data-lucide="video" class="w-5 h-5"></i>
+                <span class="hidden sm:inline">Upload</span>
+            </a>
+        </div>
+    </nav>
 
-  <h1 id="title" class="text-xl font-bold mt-4"></h1>
+    <!-- Main Player Layout -->
+    <main class="pt-20 px-4 md:px-8 lg:px-16 max-w-[1600px] mx-auto pb-10">
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Left Side: Video Player and Metadata -->
+            <div class="flex-1">
+                <div class="rounded-xl overflow-hidden aspect-video w-full bg-black">
+                    <video id="video-player" class="w-full h-full" controls autoplay></video>
+                </div>
 
-  <div class="flex items-center gap-3 mt-3 cursor-pointer" id="channel">
-    <img id="pfp" class="w-10 h-10 rounded-full hidden">
-    <div id="pfp-fallback" class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold"></div>
-    <div>
-      <p id="uploader" class="font-semibold"></p>
-      <p id="subs" class="text-sm text-gray-500"></p>
-    </div>
-  </div>
+                <div class="mt-4">
+                    <h1 id="video-title" class="text-xl font-bold line-clamp-2">Loading...</h1>
+                    
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-4">
+                        <!-- Author Info - Clickable Area -->
+                        <div id="creator-link" class="flex items-center gap-3 cursor-pointer group">
+                            <!-- Dynamic Channel Profile Picture -->
+                            <div class="relative w-10 h-10 shrink-0">
+                                <img id="channel-pfp" src="" alt="" class="w-10 h-10 rounded-full bg-gray-200 object-cover hidden">
+                                <div id="pfp-fallback" class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold uppercase">?</div>
+                            </div>
+                            <div>
+                                <p id="uploader-name" class="font-semibold text-base leading-none group-hover:text-blue-600 transition-colors">OopToop Creator</p>
+                                <p id="sub-count" class="text-sm text-gray-500 mt-1">-- subscribers</p>
+                            </div>
+                            <button class="ml-4 bg-black text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors">Subscribe</button>
+                        </div>
 
-  <div class="mt-4 bg-gray-100 p-3 rounded-xl">
-    <p class="font-bold"><span id="views"></span> views • <span id="date"></span></p>
-    <p id="desc" class="mt-2 text-sm"></p>
-  </div>
-</div>
+                        <!-- Actions Bar (Ratings) -->
+                        <div class="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-4">
+                            <div id="star-rating" class="flex items-center border-r border-gray-300 pr-4">
+                                <span class="star p-1" data-value="1"><i data-lucide="star" class="w-5 h-5"></i></span>
+                                <span class="star p-1" data-value="2"><i data-lucide="star" class="w-5 h-5"></i></span>
+                                <span class="star p-1" data-value="3"><i data-lucide="star" class="w-5 h-5"></i></span>
+                                <span class="star p-1" data-value="4"><i data-lucide="star" class="w-5 h-5"></i></span>
+                                <span class="star p-1" data-value="5"><i data-lucide="star" class="w-5 h-5"></i></span>
+                            </div>
+                            <button id="share-btn" class="flex items-center gap-2 hover:bg-gray-200 rounded-full transition-colors px-2 py-1">
+                                <i data-lucide="share-2" class="w-5 h-5"></i>
+                                <span class="text-sm font-medium">Share</span>
+                            </button>
+                        </div>
+                    </div>
 
-<!-- UP NEXT -->
-<aside class="w-full lg:w-[360px]">
-<h2 class="font-bold mb-3">Up next</h2>
-<div id="upnext" class="flex flex-col gap-4"></div>
-</aside>
+                    <!-- Description Box -->
+                    <div class="mt-4 bg-gray-100 rounded-xl p-3 text-sm hover:bg-gray-200 transition-colors cursor-pointer">
+                        <div class="font-bold mb-1">
+                            <span id="video-views">0</span> views • <span id="video-date">Recently</span>
+                        </div>
+                        <p id="video-description" class="whitespace-pre-wrap text-gray-800"></p>
+                    </div>
+                </div>
+            </div>
 
-</div>
-</main>
+            <!-- Right Side: Sidebar/Up Next -->
+            <div class="lg:w-[350px] xl:w-[400px]">
+                <h2 class="font-bold mb-4">Up next</h2>
+                <div id="sidebar-feed" class="flex flex-col gap-4">
+                    <!-- Sidebar populated by JS -->
+                </div>
+            </div>
+
+        </div>
+    </main>
 
 <script>
-lucide.createIcons();
+    lucide.createIcons();
 
-const owner = "OopToop";
-const repo = "videos";
+    const owner = 'OopToop';
+    const repo = 'videos';
+    const videoBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/videos/`;
+    const metadataBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/metadata/`;
+    const pfpBase = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/`;
 
-const raw = `https://raw.githubusercontent.com/${owner}/${repo}/main`;
-const metadataBase = `${raw}/metadata/`;
-const videoBase = `${raw}/videos/`;
-const thumbBase = `${raw}/thumbnails/`;
-const pfpBase = `${raw}/profile%20pictures/`;
+    // Helper to handle tags regardless of whether they are arrays or comma-separated strings
+    const normalizeTags = (tags) => {
+        if (Array.isArray(tags)) return tags.map(t => t.toLowerCase());
+        if (typeof tags === 'string') return tags.split(',').map(t => t.trim().toLowerCase());
+        return [];
+    };
 
-const params = new URLSearchParams(location.search);
-const id = params.get("id");
+    function getQueryParam(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
 
-if (!id) {
-  document.body.innerHTML = "No video ID";
-  throw "";
-}
+    const videoId = getQueryParam('id');
 
-(async () => {
-  const meta = await fetch(metadataBase + id).then(r => r.json());
-  const leaderboard = await fetch(`${raw}/leaderboard.json`).then(r => r.json());
-  const files = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`).then(r => r.json());
+    if (videoId) {
+        Promise.all([
+            fetch(metadataBase + videoId).then(res => res.json()),
+            fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json()),
+            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`, {
+                headers: { "Accept": "application/vnd.github.v3+json" }
+            }).then(res => res.json())
+        ])
+        .then(async ([data, leaderboard, allFiles]) => {
+            // --- MAIN VIDEO SETUP ---
+            const uploader = data.author || data.uploader || 'OopToop Creator';
+            const currentTags = normalizeTags(data.tags);
+            
+            document.getElementById('video-title').textContent = data.title;
+            document.getElementById('video-description').textContent = data.description || "No description.";
+            document.getElementById('video-date').textContent = data.date || "Unknown date";
+            document.getElementById('uploader-name').textContent = uploader;
+            document.getElementById('video-views').textContent = (data.views || 0).toLocaleString();
+            
+            // Set Player - Removed encodeURIComponent to fix filename issues
+            const player = document.getElementById('video-player');
+            player.src = videoBase + data.filename;
+            player.load(); 
 
-  const uploader = meta.uploader;
+            // Subscriber Count
+            const subs = leaderboard[uploader];
+            document.getElementById('sub-count').textContent = subs !== undefined 
+                ? `${subs.toLocaleString()} subscribers` 
+                : "0 subscribers";
 
-  /* VIDEO */
-  const video = document.getElementById("video");
-  video.src = videoBase + encodeURIComponent(meta.filename);
-  video.load();
+            // Clickable Channel Logic
+            document.getElementById('creator-link').onclick = () => {
+                location.href = `channel.html?c=${encodeURIComponent(uploader)}`;
+            };
 
-  /* META */
-  title.textContent = meta.title;
-  desc.textContent = meta.description || "";
-  views.textContent = Number(meta.views || 0).toLocaleString();
-  date.textContent = meta.date || "Unknown";
-  uploader.textContent = uploader;
-  subs.textContent = (leaderboard[uploader] || 0).toLocaleString() + " subscribers";
+            // Profile Picture
+            const pfpImg = document.getElementById('channel-pfp');
+            const fallback = document.getElementById('pfp-fallback');
+            const pfpUrl = `${pfpBase}${encodeURIComponent(uploader)}.jpg`;
 
-  /* CHANNEL CLICK */
-  channel.onclick = () => location.href = `channel.html?c=${encodeURIComponent(uploader)}`;
+            pfpImg.onload = () => {
+                pfpImg.classList.remove('hidden');
+                fallback.classList.add('hidden');
+            };
+            pfpImg.onerror = () => {
+                pfpImg.classList.add('hidden');
+                fallback.classList.remove('hidden');
+                fallback.textContent = uploader.charAt(0).toUpperCase();
+            };
+            pfpImg.src = pfpUrl;
 
-  /* PFP */
-  const pfp = document.getElementById("pfp");
-  pfp.src = `${pfpBase}${encodeURIComponent(uploader)}.jpg`;
-  pfp.onload = () => {
-    pfp.classList.remove("hidden");
-    document.getElementById("pfp-fallback").classList.add("hidden");
-  };
-  pfp.onerror = () => {
-    document.getElementById("pfp-fallback").textContent = uploader[0].toUpperCase();
-  };
+            // --- REFINED UP NEXT RECOMMENDATION LOGIC ---
+            const sidebar = document.getElementById('sidebar-feed');
+            sidebar.innerHTML = '';
+            
+            try {
+                // Filter files (excluding current)
+                const metadataFiles = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
+                
+                // Fetch details for all potential videos
+                const metadataPromises = metadataFiles.map(file => 
+                    fetch(file.download_url)
+                        .then(r => r.json())
+                        .then(d => ({ file: file.name, data: d }))
+                        .catch(() => null)
+                );
+                
+                const potentialVideos = (await Promise.all(metadataPromises)).filter(v => v !== null);
 
-  /* UP NEXT */
-  const currentTags = meta.tags || [];
-  const upnext = document.getElementById("upnext");
+                // Score the videos
+                const scoredVideos = potentialVideos.map(v => {
+                    let score = 0;
+                    const vAuthor = v.data.author || v.data.uploader;
+                    const vTags = normalizeTags(v.data.tags);
+                    
+                    // Same creator boost
+                    if (vAuthor === uploader) score += 20;
+                    
+                    // Tag matching boost
+                    const commonTags = currentTags.filter(t => vTags.includes(t));
+                    score += (commonTags.length * 10);
 
-  const others = files
-    .filter(f => f.name !== id && f.name.endsWith(".json"))
-    .map(f => fetch(f.download_url).then(r => r.json()));
+                    // Random noise for variety
+                    score += Math.random() * 2;
 
-  const vids = await Promise.all(others);
+                    return { ...v, score };
+                });
 
-  const scored = vids.map(v => {
-    let score = 0;
-    if (v.uploader === uploader) score += 20;
-    score += (v.tags || []).filter(t => currentTags.includes(t)).length * 10;
-    return { v, score };
-  }).sort((a,b)=>b.score-a.score).slice(0,8);
+                scoredVideos.sort((a, b) => b.score - a.score);
+                
+                scoredVideos.slice(0, 8).forEach(v => {
+                    const item = document.createElement('div');
+                    item.className = 'flex gap-2 cursor-pointer group';
+                    item.onclick = () => location.href = `video.html?id=${v.file}`;
+                    item.innerHTML = `
+                        <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                            <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}" 
+                                 class="w-full h-full object-cover transition-transform group-hover:scale-105"
+                                 onerror="this.src='https://via.placeholder.com/160x90?text=No+Thumb'">
+                        </div>
+                        <div class="flex flex-col overflow-hidden">
+                            <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${v.data.title}</h4>
+                            <p class="text-xs text-gray-500 mt-1">${v.data.author || v.data.uploader}</p>
+                            <p class="text-xs text-gray-400">${(v.data.views || 0).toLocaleString()} views</p>
+                        </div>
+                    `;
+                    sidebar.appendChild(item);
+                });
+            } catch (recErr) {
+                console.error("Failed to load recommendations", recErr);
+                sidebar.innerHTML = '<p class="text-sm text-gray-400">Could not load recommendations.</p>';
+            }
 
-  scored.forEach(({v}) => {
-    const el = document.createElement("div");
-    el.classNa
+            // Star Rating Persistence
+            const stars = document.querySelectorAll('.star');
+            let ratingKey = `rating-${videoId}`;
+            let savedRating = localStorage.getItem(ratingKey) || 0;
+            const updateStars = (val) => {
+                stars.forEach(s => {
+                    if (parseInt(s.dataset.value) <= val) s.classList.add('selected');
+                    else s.classList.remove('selected');
+                });
+            };
+            updateStars(savedRating);
+            stars.forEach(star => {
+                star.addEventListener('click', () => {
+                    const val = star.dataset.value;
+                    localStorage.setItem(ratingKey, val);
+                    updateStars(val);
+                });
+            });
+        })
+        .catch(err => {
+            console.error("Global load error:", err);
+            document.getElementById('video-title').textContent = "Error loading video";
+        });
+    }
 
+    // Share Logic
+    const shareBtn = document.getElementById('share-btn');
+    const toast = document.getElementById('copy-toast');
+    shareBtn.addEventListener('click', () => {
+        const el = document.createElement('textarea');
+        el.value = window.location.href;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+
+    // Search input redirect
+    document.getElementById('search-input').onkeypress = e => {
+        if (e.key === 'Enter') location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+    };
+</script>
+
+</body>
+</html>
