@@ -174,18 +174,20 @@
             fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json()),
             fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`).then(res => res.json())
         ])
-        .then(([data, leaderboard, allFiles]) => {
+        .then(async ([currentData, leaderboard, allFiles]) => {
             // Main Video Data
-            const uploader = data.author || data.uploader || 'OopToop Creator';
-            document.getElementById('video-title').textContent = data.title;
-            document.getElementById('video-description').textContent = data.description || "No description.";
-            document.getElementById('video-date').textContent = data.date || "Unknown date";
+            const uploader = currentData.author || currentData.uploader || 'OopToop Creator';
+            const currentTags = (currentData.tags || "").toLowerCase().split(',').map(t => t.trim()).filter(t => t);
+            
+            document.getElementById('video-title').textContent = currentData.title;
+            document.getElementById('video-description').textContent = currentData.description || "No description.";
+            document.getElementById('video-date').textContent = currentData.date || "Recently";
             document.getElementById('uploader-name').textContent = uploader;
-            document.getElementById('video-views').textContent = (data.views || 0).toLocaleString();
+            document.getElementById('video-views').textContent = (currentData.views || 0).toLocaleString();
             
             // Set Player
             const player = document.getElementById('video-player');
-            player.src = videoBase + encodeURIComponent(data.filename);
+            player.src = videoBase + encodeURIComponent(currentData.filename);
 
             // Subscriber Count
             const subs = leaderboard[uploader];
@@ -214,29 +216,64 @@
             };
             pfpImg.src = pfpUrl;
 
-            // Sidebar: Up Next (Randomized selection)
+            // --- Sidebar Logic: Related Videos ---
             const sidebar = document.getElementById('sidebar-feed');
-            sidebar.innerHTML = '';
-            const otherVideos = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
+            sidebar.innerHTML = '<div class="text-gray-400 text-sm">Loading recommendations...</div>';
             
-            // Just show top 8 other videos
-            otherVideos.slice(0, 8).forEach(file => {
-                fetch(file.download_url).then(r => r.json()).then(vData => {
-                    const item = document.createElement('div');
-                    item.className = 'flex gap-2 cursor-pointer group';
-                    item.onclick = () => location.href = `video.html?id=${file.name}`;
-                    item.innerHTML = `
-                        <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                            <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${vData.thumbnail}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex flex-col">
-                            <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${vData.title}</h4>
-                            <p class="text-xs text-gray-500 mt-1">${vData.author || vData.uploader}</p>
-                            <p class="text-xs text-gray-400">${(vData.views || 0).toLocaleString()} views</p>
-                        </div>
-                    `;
-                    sidebar.appendChild(item);
-                });
+            const fileList = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
+            
+            // Fetch all metadata for comparison
+            const metadataPromises = fileList.map(file => 
+                fetch(file.download_url).then(r => r.json()).then(d => ({ file, data: d }))
+            );
+            const allMetadata = await Promise.all(metadataPromises);
+
+            // Score each video based on relevance
+            const scoredVideos = allMetadata.map(item => {
+                let score = 0;
+                const itemUploader = item.data.author || item.data.uploader || 'OopToop Creator';
+                const itemTags = (item.data.tags || "").toLowerCase().split(',').map(t => t.trim());
+
+                // Rule 1: Same Creator (Highest weight)
+                if (itemUploader === uploader) score += 10;
+
+                // Rule 2: Matching Tags
+                const matches = itemTags.filter(t => currentTags.includes(t)).length;
+                score += matches * 2;
+
+                // Rule 3: Random jitter so the list isn't always identical
+                score += Math.random();
+
+                return { ...item, score };
+            });
+
+            // Sort by score (descending) and take top 12
+            const recommendations = scoredVideos
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 12);
+
+            sidebar.innerHTML = '';
+            recommendations.forEach(item => {
+                const vData = item.data;
+                const file = item.file;
+                const recUploader = vData.author || vData.uploader || 'OopToop Creator';
+                
+                const card = document.createElement('div');
+                card.className = 'flex gap-2 cursor-pointer group';
+                card.onclick = () => location.href = `video.html?id=${file.name}`;
+                card.innerHTML = `
+                    <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                        <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${vData.thumbnail}" 
+                             class="w-full h-full object-cover transition-transform group-hover:scale-105"
+                             onerror="this.src='https://via.placeholder.com/160x90?text=No+Thumb'">
+                    </div>
+                    <div class="flex flex-col">
+                        <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${vData.title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${recUploader}</p>
+                        <p class="text-xs text-gray-400">${(vData.views || 0).toLocaleString()} views</p>
+                    </div>
+                `;
+                sidebar.appendChild(card);
             });
 
             // Star Rating Persistence
