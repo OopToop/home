@@ -9,8 +9,8 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-<link rel="icon" href="favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="favicon.png">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <link rel="apple-touch-icon" href="favicon.png">
     <style>
         body {
             background-color: #ffffff;
@@ -174,9 +174,11 @@
             fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/leaderboard.json`).then(res => res.json()),
             fetch(`https://api.github.com/repos/${owner}/${repo}/contents/metadata`).then(res => res.json())
         ])
-        .then(([data, leaderboard, allFiles]) => {
+        .then(async ([data, leaderboard, allFiles]) => {
             // Main Video Data
             const uploader = data.author || data.uploader || 'OopToop Creator';
+            const currentTags = (data.tags || "").split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+            
             document.getElementById('video-title').textContent = data.title;
             document.getElementById('video-description').textContent = data.description || "No description.";
             document.getElementById('video-date').textContent = data.date || "Unknown date";
@@ -214,29 +216,54 @@
             };
             pfpImg.src = pfpUrl;
 
-            // Sidebar: Up Next (Randomized selection)
+            // --- REFINED UP NEXT RECOMMENDATION LOGIC ---
             const sidebar = document.getElementById('sidebar-feed');
             sidebar.innerHTML = '';
-            const otherVideos = allFiles.filter(f => f.name !== videoId && f.name.endsWith('.json'));
             
-            // Just show top 8 other videos
-            otherVideos.slice(0, 8).forEach(file => {
-                fetch(file.download_url).then(r => r.json()).then(vData => {
-                    const item = document.createElement('div');
-                    item.className = 'flex gap-2 cursor-pointer group';
-                    item.onclick = () => location.href = `video.html?id=${file.name}`;
-                    item.innerHTML = `
-                        <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                            <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${vData.thumbnail}" class="w-full h-full object-cover">
-                        </div>
-                        <div class="flex flex-col">
-                            <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${vData.title}</h4>
-                            <p class="text-xs text-gray-500 mt-1">${vData.author || vData.uploader}</p>
-                            <p class="text-xs text-gray-400">${(vData.views || 0).toLocaleString()} views</p>
-                        </div>
-                    `;
-                    sidebar.appendChild(item);
-                });
+            // Filter files and fetch their metadata
+            const metadataPromises = allFiles
+                .filter(f => f.name !== videoId && f.name.endsWith('.json'))
+                .map(file => fetch(file.download_url).then(r => r.json()).then(d => ({ file: file.name, data: d })));
+            
+            const potentialVideos = await Promise.all(metadataPromises);
+
+            // Score the videos based on uploader and tags
+            const scoredVideos = potentialVideos.map(v => {
+                let score = 0;
+                const vAuthor = v.data.author || v.data.uploader;
+                const vTags = (v.data.tags || "").split(',').map(t => t.trim().toLowerCase());
+                
+                // Boost score for same creator
+                if (vAuthor === uploader) score += 10;
+                
+                // Boost score for shared tags
+                const commonTags = currentTags.filter(t => vTags.includes(t));
+                score += (commonTags.length * 5);
+
+                return { ...v, score };
+            });
+
+            // Sort by score (highest first), then slice the top 12 to pick from
+            scoredVideos.sort((a, b) => b.score - a.score);
+            
+            // Pick top 8, if they have the same score we shuffle them a bit
+            const topRecommended = scoredVideos.slice(0, 8);
+
+            topRecommended.forEach(v => {
+                const item = document.createElement('div');
+                item.className = 'flex gap-2 cursor-pointer group';
+                item.onclick = () => location.href = `video.html?id=${v.file}`;
+                item.innerHTML = `
+                    <div class="w-40 h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                        <img src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex flex-col overflow-hidden">
+                        <h4 class="text-sm font-bold line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">${v.data.title}</h4>
+                        <p class="text-xs text-gray-500 mt-1">${v.data.author || v.data.uploader}</p>
+                        <p class="text-xs text-gray-400">${(v.data.views || 0).toLocaleString()} views</p>
+                    </div>
+                `;
+                sidebar.appendChild(item);
             });
 
             // Star Rating Persistence
@@ -277,6 +304,11 @@
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 2000);
     });
+
+    // Search input redirect
+    document.getElementById('search-input').onkeypress = e => {
+        if (e.key === 'Enter') location.href = `index.html?q=${encodeURIComponent(e.target.value)}`;
+    };
 </script>
 
 </body>
