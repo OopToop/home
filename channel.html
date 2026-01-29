@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OopToop - Channel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+    body { background:#fff; color:#0f0f0f; }
+    .video-card:hover .video-thumb { border-radius:0; transition:.2s }
+    .no-scrollbar::-webkit-scrollbar { display:none }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- NAV -->
+<nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
+    <div class="flex items-center gap-4">
+        <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='https://ooptoop.github.io/home/leaderboard.html'">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <a href="index.html" class="flex items-center gap-1 group">
+            <img src="https://raw.githubusercontent.com/OopToop/home/main/logo.png" alt="OopToop Logo" class="h-8 w-auto mr-1">
+            <span class="text-xl font-bold tracking-tighter">OopToop</span>
+        </a>
+    </div>
+    <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+    <div class="flex gap-3 items-center">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" target="_blank" class="bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2">
+            <i data-lucide="video" class="w-5 h-5"></i>
+            <span class="hidden sm:inline">Upload</span>
+        </a>
+    </div>
+</nav>
+
+<!-- CHANNEL HEADER -->
+<header class="pt-20 px-6 max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row items-center gap-6 pb-8 border-b border-gray-100">
+        <div class="w-32 h-32 md:w-40 md:h-40 shrink-0 relative">
+            <img id="channel-pfp" src="" class="w-full h-full rounded-full object-cover hidden">
+            <div id="pfp-fallback" class="w-full h-full rounded-full bg-purple-600 flex items-center justify-center text-white text-5xl font-bold uppercase">?</div>
+        </div>
+        <div class="text-center md:text-left">
+            <h1 id="channel-name" class="text-3xl md:text-4xl font-bold">Loading...</h1>
+            <p id="channel-subs" class="text-gray-500 mt-1">-- subscribers</p>
+            <div class="mt-4 flex gap-2 justify-center md:justify-start">
+                <button class="bg-black text-white px-6 py-2 rounded-full font-bold hover:bg-gray-800 transition-colors">Subscribe</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- VIDEOS SECTION -->
+<main class="px-6 max-w-6xl mx-auto py-8">
+    <div class="flex border-b border-gray-100 mb-6">
+        <button class="pb-3 border-b-2 border-black font-bold px-4">Videos</button>
+    </div>
+    <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Videos will load here -->
+    </div>
+</main>
+
+<script>
+lucide.createIcons();
+
+const params = new URLSearchParams(window.location.search);
+const creatorName = params.get('c');
+
+async function init() {
+    if (!creatorName) {
+        // Fix for Location 'index.html' not a valid URL error
+        const currentUrl = window.location.href;
+        const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+        window.location.href = baseUrl + 'index.html';
+        return;
+    }
+
+    // Set UI Basics
+    document.getElementById('channel-name').textContent = creatorName;
+    const pfpUrl = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/${encodeURIComponent(creatorName)}.jpg`;
+    const pfpImg = document.getElementById('channel-pfp');
+    const fallback = document.getElementById('pfp-fallback');
+    
+    pfpImg.onload = () => { pfpImg.classList.remove('hidden'); fallback.classList.add('hidden'); };
+    pfpImg.onerror = () => { fallback.textContent = creatorName.charAt(0); };
+    pfpImg.src = pfpUrl;
+
+    try {
+        // Fetch Leaderboard for subs
+        const lbRes = await fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json');
+        const lbData = await lbRes.json();
+        document.getElementById('channel-subs').textContent = (lbData[creatorName]?.toLocaleString() || "0") + " subscribers";
+
+        // Fetch Metadata for videos
+        const filesRes = await fetch('https://api.github.com/repos/OopToop/videos/contents/metadata');
+        const files = await filesRes.json();
+        
+        const videoPromises = files
+            .filter(f => f.name.endsWith('.json'))
+            .map(f => fetch(f.download_url).then(r => r.json()).then(d => ({file: f.name, data: d})));
+        
+        const allVideos = await Promise.all(videoPromises);
+        const creatorVideos = allVideos.filter(v => (v.data.author || v.data.uploader) === creatorName);
+
+        const grid = document.getElementById('video-grid');
+        grid.innerHTML = creatorVideos.length ? '' : '<p class="text-gray-500">No videos uploaded yet.</p>';
+
+        creatorVideos.forEach(v => {
+            const views = v.data.views !== undefined ? parseInt(v.data.views).toLocaleString() : "0";
+            const card = document.createElement('div');
+            card.className = 'video-card cursor-pointer group';
+            card.innerHTML = `
+                <img class="video-thumb rounded-xl mb-3 w-full aspect-video object-cover bg-gray-100" 
+                     src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
+                <div class="flex flex-col">
+                    <h3 class="font-semibold line-clamp-2 leading-snug">${v.data.title}</h3>
+                    <p class="text-xs text-gray-500 mt-1">${views} views</p>
+                </div>
+            `;
+            card.onclick = () => location.href = `video.html?id=${encodeURIComponent(v.file)}`;
+            grid.appendChild(card);
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+init();
+
+document.getElementById('search-input').onkeypress = e => {
+    if (e.key === 'Enter') {
+        const currentUrl = window.location.href;
+        const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+        location.href = baseUrl + `index.html?q=${encodeURIComponent(e.target.value)}`;
+    }
+};
+</script>
+</body>
+</html>
