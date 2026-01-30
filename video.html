@@ -197,12 +197,13 @@
             // --- SMART SOURCE AUTO-DETECT ---
             const player = document.getElementById('video-player');
             if (data.videoUrl) {
-                player.src = data.videoUrl; // Google Drive / external
+                // Priority: Use videoUrl if present (e.g. Google Drive)
+                player.src = data.videoUrl;
             } else if (data.filename) {
-                // Using encoded filename for safety with spaces/special chars in GitHub paths
+                // Fallback: Use GitHub repository filename
                 player.src = videoBase + encodeURIComponent(data.filename); 
             } else {
-                console.error("No video source found");
+                console.error("No video source found in metadata.");
             }
             player.load(); 
 
