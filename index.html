@@ -25,7 +25,6 @@ body { background:#fff; color:#0f0f0f; }
 <!-- NAV -->
     <nav class="fixed top-0 left-0 right-0 h-14 bg-white flex items-center justify-between px-4 z-50 border-b border-gray-100">
         <div class="flex items-center gap-4">
-            <!-- Updated Leaderboard Button Link -->
             <button class="p-2 hover:bg-gray-100 rounded-full" onclick="location.href='https://ooptoop.github.io/home/leaderboard.html'">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
@@ -46,7 +45,6 @@ body { background:#fff; color:#0f0f0f; }
   <input id="search-input" placeholder="Search" class="hidden md:block border rounded-full px-4 py-1.5 w-full max-w-md bg-gray-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
 
   <div id="action-section" class="flex gap-3 items-center">
-    <!-- Upload Button -->
     <a href="https://docs.google.com/forms/d/e/1FAIpQLScyEZsuGbtWar5SkQlbXofYXDHlHcOgLLJNz-_CyZUBO3hUgg/viewform" 
        target="_blank" 
        class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
@@ -77,7 +75,6 @@ body { background:#fff; color:#0f0f0f; }
 <script>
 lucide.createIcons();
 
-/* ---------- VIDEOS ---------- */
 const feed = document.getElementById('video-feed');
 let allVideos = [];
 let leaderboardData = {};
@@ -90,7 +87,6 @@ const tagGroups = {
   "Animation": ["animation", "animated"]
 };
 
-// Shuffle function using Fisher-Yates algorithm
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -99,7 +95,7 @@ function shuffleArray(array) {
   return array;
 }
 
-// Initial data fetch: Leaderboard and then Metadata
+// Initial data fetch
 fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
   .then(r => r.json())
   .then(data => {
@@ -107,13 +103,28 @@ fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
     return fetch('https://api.github.com/repos/OopToop/videos/contents/metadata');
   })
   .then(r => r.json())
-  .then(files => Promise.all(
-    files.filter(f => f.name.endsWith('.json'))
-         .map(f => fetch(f.download_url).then(r => r.json()).then(d => ({file: f.name, data: d})))
-  ))
+  .then(files => {
+    // Ensure we ONLY try to fetch .json files from the metadata folder
+    const metadataFiles = files.filter(f => f.name.toLowerCase().endsWith('.json'));
+    
+    return Promise.all(
+      metadataFiles.map(f => 
+        fetch(f.download_url)
+          .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.json();
+          })
+          .then(d => ({file: f.name, data: d}))
+          .catch(err => {
+            console.warn(`Skipping invalid metadata file: ${f.name}`, err);
+            return null; // Return null so we can filter it out
+          })
+      )
+    );
+  })
   .then(videos => {
-    // Randomize the initial load order
-    allVideos = shuffleArray(videos);
+    // Filter out any files that failed to parse (returned null)
+    allVideos = shuffleArray(videos.filter(v => v !== null));
     render(allVideos);
   })
   .catch(err => console.error("Error loading OopToop data:", err));
@@ -122,14 +133,12 @@ function render(list){
   feed.innerHTML = '';
   list.forEach(v => {
     const author = v.data.author || v.data.uploader || 'OopToop Creator';
-    // Get views from metadata, fallback to 0 if not present
     const views = v.data.views !== undefined ? parseInt(v.data.views).toLocaleString() : "0";
     const pfpUrl = `https://raw.githubusercontent.com/OopToop/videos/main/profile%20pictures/${encodeURIComponent(author)}.jpg`;
 
     const c = document.createElement('div');
     c.className = 'video-card cursor-pointer group';
     
-    // Create UI with dynamic PFP check and view count instead of sub count
     c.innerHTML = `
       <img class="video-thumb rounded-xl mb-3 w-full aspect-video object-cover bg-gray-100" 
            src="https://raw.githubusercontent.com/OopToop/videos/main/thumbnails/${v.data.thumbnail}">
@@ -145,7 +154,12 @@ function render(list){
         </div>
       </div>
     `;
-    c.onclick = () => location.href = `video.html?id=${encodeURIComponent(v.file)}`;
+
+    // Navigation logic with ID passing
+    c.onclick = () => {
+      location.href = `video.html?id=${encodeURIComponent(v.file)}`;
+    };
+
     feed.appendChild(c);
   });
 }
