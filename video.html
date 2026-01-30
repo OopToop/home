@@ -194,9 +194,16 @@
             document.getElementById('uploader-name').textContent = uploader;
             document.getElementById('video-views').textContent = (data.views || 0).toLocaleString();
             
-            // Set Player - Removed encodeURIComponent to fix filename issues
+            // --- SMART SOURCE AUTO-DETECT ---
             const player = document.getElementById('video-player');
-            player.src = videoBase + data.filename;
+            if (data.videoUrl) {
+                player.src = data.videoUrl; // Google Drive / external
+            } else if (data.filename) {
+                // Using encoded filename for safety with spaces/special chars in GitHub paths
+                player.src = videoBase + encodeURIComponent(data.filename); 
+            } else {
+                console.error("No video source found");
+            }
             player.load(); 
 
             // Subscriber Count
