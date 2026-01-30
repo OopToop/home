@@ -200,12 +200,23 @@
             
             // Logic to verify and apply source
             if (data.videoUrl) {
-                // Ensure the Google Drive link is treated as a video stream
-                player.src = data.videoUrl;
-                // Specifically for Drive links, some browsers need the type hint if it's uc?export=download
-                if (data.videoUrl.includes('drive.google.com')) {
+                let finalUrl = data.videoUrl;
+
+                // Handle Google Drive links
+                if (finalUrl.includes('drive.google.com')) {
                     player.type = 'video/mp4';
                 }
+
+                // Handle Dropbox links
+                // Convert www.dropbox.com to dl.dropboxusercontent.com for direct streaming
+                if (finalUrl.includes('dropbox.com')) {
+                    finalUrl = finalUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+                    // Remove the ?dl=0 or change to ?raw=1 if necessary
+                    finalUrl = finalUrl.split('?')[0] + '?raw=1';
+                    player.type = 'video/mp4';
+                }
+
+                player.src = finalUrl;
             } else if (data.filename) {
                 player.src = videoBase + encodeURIComponent(data.filename); 
             } else {
