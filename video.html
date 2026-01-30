@@ -202,21 +202,27 @@
             if (data.videoUrl) {
                 let finalUrl = data.videoUrl;
 
+                // Detect Mega.nz links
+                if (finalUrl.includes('mega.nz')) {
+                    player.src = finalUrl;
+                    player.type = 'video/mp4';
+                    player.crossOrigin = 'anonymous';
+                } 
                 // Handle Google Drive links
-                if (finalUrl.includes('drive.google.com')) {
+                else if (finalUrl.includes('drive.google.com')) {
+                    player.src = finalUrl;
                     player.type = 'video/mp4';
                 }
-
                 // Handle Dropbox links
-                // Convert www.dropbox.com to dl.dropboxusercontent.com for direct streaming
-                if (finalUrl.includes('dropbox.com')) {
+                else if (finalUrl.includes('dropbox.com')) {
                     finalUrl = finalUrl.replace('www.dropbox.com', 'dl.dropboxusercontent.com');
-                    // Remove the ?dl=0 or change to ?raw=1 if necessary
                     finalUrl = finalUrl.split('?')[0] + '?raw=1';
+                    player.src = finalUrl;
                     player.type = 'video/mp4';
                 }
-
-                player.src = finalUrl;
+                else {
+                    player.src = finalUrl;
+                }
             } else if (data.filename) {
                 player.src = videoBase + encodeURIComponent(data.filename); 
             } else {
