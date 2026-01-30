@@ -94,7 +94,8 @@
             <!-- Left Side: Video Player and Metadata -->
             <div class="flex-1">
                 <div class="rounded-xl overflow-hidden aspect-video w-full bg-black">
-                    <video id="video-player" class="w-full h-full" controls autoplay></video>
+                    <!-- Added playsinline and anonymous cross-origin for better external link support -->
+                    <video id="video-player" class="w-full h-full" controls autoplay playsinline crossorigin="anonymous"></video>
                 </div>
 
                 <div class="mt-4">
@@ -196,15 +197,26 @@
             
             // --- SMART SOURCE AUTO-DETECT ---
             const player = document.getElementById('video-player');
+            
+            // Logic to verify and apply source
             if (data.videoUrl) {
-                // Priority: Use videoUrl if present (e.g. Google Drive)
+                // Ensure the Google Drive link is treated as a video stream
                 player.src = data.videoUrl;
+                // Specifically for Drive links, some browsers need the type hint if it's uc?export=download
+                if (data.videoUrl.includes('drive.google.com')) {
+                    player.type = 'video/mp4';
+                }
             } else if (data.filename) {
-                // Fallback: Use GitHub repository filename
                 player.src = videoBase + encodeURIComponent(data.filename); 
             } else {
                 console.error("No video source found in metadata.");
             }
+            
+            // Error handling for video loading
+            player.onerror = () => {
+                console.error("Video failed to load:", player.src);
+            };
+
             player.load(); 
 
             // Subscriber Count
