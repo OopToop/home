@@ -104,7 +104,6 @@ fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
   })
   .then(r => r.json())
   .then(files => {
-    // Ensure we ONLY try to fetch .json files from the metadata folder
     const metadataFiles = files.filter(f => f.name.toLowerCase().endsWith('.json'));
     
     return Promise.all(
@@ -117,15 +116,15 @@ fetch('https://raw.githubusercontent.com/OopToop/videos/main/leaderboard.json')
           .then(d => ({file: f.name, data: d}))
           .catch(err => {
             console.warn(`Skipping invalid metadata file: ${f.name}`, err);
-            return null; // Return null so we can filter it out
+            return null;
           })
       )
     );
   })
   .then(videos => {
-    // Filter out any files that failed to parse (returned null)
-    allVideos = shuffleArray(videos.filter(v => v !== null));
-    render(allVideos);
+    allVideos = videos.filter(v => v !== null);
+    // On first load, shuffle and show only 24
+    render(shuffleArray([...allVideos]).slice(0, 24));
   })
   .catch(err => console.error("Error loading OopToop data:", err));
 
@@ -155,7 +154,6 @@ function render(list){
       </div>
     `;
 
-    // Navigation logic with ID passing
     c.onclick = () => {
       location.href = `video.html?id=${encodeURIComponent(v.file)}`;
     };
@@ -185,13 +183,15 @@ document.getElementById('tags-bar').onclick = e => {
   btn.classList.remove('bg-gray-100', 'text-black');
 
   if (category === 'All') {
-    render(allVideos);
+    // Show a new random set of 24 when "All" is clicked
+    render(shuffleArray([...allVideos]).slice(0, 24));
   } else {
     const keywords = tagGroups[category] || [category.toLowerCase()];
     const filtered = allVideos.filter(v => {
       const vTags = ((v.data.tags || "") + " " + (v.data.category || "")).toLowerCase();
       return keywords.some(k => vTags.includes(k));
     });
+    // For specific tags, show all matching results
     render(filtered);
   }
 };
